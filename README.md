@@ -2,7 +2,7 @@
 
 A Multimodal Epigenetic Sequencing Assay of Cell-free DNA for Non-invasive Detection of Colon Cancer
 
-## Requiremen
+## Requirement
 - Python >=3.6
 
 ## Authors
