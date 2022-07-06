@@ -1,6 +1,6 @@
 # MESA
 
-A Multimodal Epigenetic Sequencing Assay of Cell-free DNA for Non-invasive Detection of Colon Cancer
+Multimodal Epigenetic Sequencing Analysis (MESA) of Cell-free DNA for Non-invasive Cancer Detection
 
 ## Requirement
 - Python >=3.6
