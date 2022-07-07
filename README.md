@@ -14,9 +14,21 @@
   -  scikit-learn = 0.24.2
   -  joblib
   -  itertools
-  -  boruta_py  
+  -  boruta_py
 
-# Usage
+## Usage
+Clone the repository with `git`:
+```shell
+git clone https://github.com/ChaorongC/MESA
+cd MESA
+```
+
+Or download the repository with `wget`:
+```shell
+wget https://github.com/ChaorongC/MESA/archive/refs/heads/main.zip
+unzip MESA-main.zip
+cd MESA-main
+```
 
 
 
