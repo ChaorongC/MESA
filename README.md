@@ -30,6 +30,9 @@ unzip MESA-main.zip
 cd MESA-main
 ```
 
+There are two python document in the root directory: `MESA.py`, `demo.py`
+In 'MESA.py', function `SBS_LOO()` is for sequential backward selection (SBS) in a single type of feature, and `calculate_combine()` is for combining SBS results on different types of features then return the multimodal prediction result.
+In 'demo.py', we show an example of how **MESA** perform sequential featurre selection on types of features and combines them into a multimodal cancer detection model.
 
 
 ## Authors
