@@ -1,3 +1,11 @@
+"""
+  @Content: demo for MESA
+  @Author: Chaorong Chen
+  @Date: 2022-07-06 17:20:08
+  @Last Modified by: Chaorong Chen
+  @Last Modified time: 2022-06-14 16:27:03
+"""
+
 from MESA import *
 # Load data sets (cohort 1 as example)
 X_c1_t1 = pd.read_csv("dir_to_data/cohort1_type1.csv",index_col=0)
