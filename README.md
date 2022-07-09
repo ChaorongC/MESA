@@ -16,7 +16,7 @@
   -  itertools
   -  boruta_py
 
-## Usage
+## Installation
 Clone the repository with `git`:
 ```shell
 git clone https://github.com/ChaorongC/MESA
@@ -29,10 +29,56 @@ wget https://github.com/ChaorongC/MESA/archive/refs/heads/main.zip
 unzip MESA-main.zip
 cd MESA-main
 ```
+## Usage
+In the root directory, there are two Python scripts: `MESA.py` and `demo.py.`
+The function `SBS LOO()` in 'MESA.py' is for sequential backward selection (SBS) in a single type of feature, and the function `calculate combine()` is for combining SBS results on different types of features and returning the multimodal prediction result.
+We demonstrate in `demo.py` how **MESA** performs sequential feature selection on different types of features and combines them into a multimodal cancer detection model.
 
-There are two python document in the root directory: `MESA.py`, `demo.py`
-In 'MESA.py', function `SBS_LOO()` is for sequential backward selection (SBS) in a single type of feature, and `calculate_combine()` is for combining SBS results on different types of features then return the multimodal prediction result.
-In 'demo.py', we show an example of how **MESA** perform sequential featurre selection on types of features and combines them into a multimodal cancer detection model.
+#### Parameters
+```shell
+SBS_LOO(X,
+        y,
+        estimator,
+        classifiers=[],
+        cv=5,
+        random_state=0,
+        min_feature=10,
+        n_jobs=-1,
+        scoring='roc_auc',
+        boruta_top_n_feature=1000)
+```
+__X__ : dataframe of shape (n_samples, n_features)
+  > Input samples.
+  > A matrix containing samples as rows with features as columns.
+   
+__y__ : array-like of shape (n_samples,)
+  >Target values/labels/stages.
+
+__estimator__ : estimator object/model implementing ‘fit’
+  >The object used to fit the data.
+    
+__classifiers__ : a list of estimator object/model implementing ‘fit’ and 'predict_proba'
+  >The object to use to evalutate on test set at the end.
+
+__cv__ : int, cross-validation generator or an iterable, default=5
+  >(Adopted from `sklearn.model_selection.cross_val_score`) Determines the cross-validation splitting strategy. Possible inputs for cv are: 
+  >None, to use the default 5-fold cross validation; int, to specify the number of folds in a (Stratified)KFold; CV splitter, An iterable yielding (train, test) splits as arrays of indices.
+            
+__random_state__ : int, RandomState instance or None, default=0
+  >Controls the pseudo random number generation for shuffling the data.
+  
+__min_feature : int, default=10
+  >The minimal feature size SBS should consider
+  
+__n_jobs__ : int, default=-1
+  >Number of jobs to run in parallel. When evaluating a new feature to add or remove, the cross-validation procedure is parallel over the folds. None means 1 unless in a joblib.parallel_backend context. -1 means using all processors.  
+  
+__scoring__ : str or callable, default='roc_auc'
+  >For SBS process, a str (see scikit-learn model evaluation documentation) or a scorer callable object/function with signature scorer(estimator, X, y) which should return only a single value. Compatible with `sklearn.model_selection.cross_val_score`.    
+    
+__boruta_top_n_feature__ : int, default=1000
+  >Features to select for SBS in the Boruta algorithm. 
+    
 
 
 ## Authors
