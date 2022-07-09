@@ -79,6 +79,23 @@ __scoring__ : str or callable, default='roc_auc'
 __boruta_top_n_feature__ : int, default=1000
   >Features to select for SBS in the Boruta algorithm. 
     
+```shell
+calculate_combine(X, 
+                  y, 
+                  feature_selected, 
+                  classifiers)
+```
+__X__ : list of dataframes of shape (n_samples, n_features)
+  >Input samples.
+  
+__y__ : array-like of shape (n_samples,)
+  >Target values/labels.
+  
+__feature_selected__ :  list of tuples (n_samples) 
+  >Features selected for each LOO iteration (same order with X)
+  
+__classifiers__ : a list of estimator object/model implementing ‘fit’ and 'predict_proba'
+  >The object to use to evalutate on test set at the end.
 
 
 ## Authors
