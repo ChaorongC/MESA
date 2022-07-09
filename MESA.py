@@ -53,7 +53,7 @@ def SBS_LOO(X,
     scoring : str or callable, default='roc_auc'
         For SBS process, a str (see scikit-learn model evaluation documentation) or a scorer callable object / function with signature scorer(estimator, X, y) which should return only a single value.    
     boruta_top_n_feature : int, default=1000
-        Number of jobs to run in parallel. When evaluating a new feature to add or remove, the cross-validation procedure is parallel over the folds. None means 1 unless in a joblib.parallel_backend context. -1 means using all processors.  
+        Features to select for SBS in the Boruta algorithm.
     
     Returns
     ----------
