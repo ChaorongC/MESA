@@ -1,7 +1,7 @@
 #!/bin/bash
 
 ### Author: Jianfeng Xu and Yumei Li
-### Time: 06/27/2022
+### Date: 06/27/2022
 ### Softwares needed: deepTools, bedtools, DANPOS2, UCSC tools, 
 
 # Reference genome combining human genome (hg19), Labmda, and pUC19 sequences
