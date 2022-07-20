@@ -1,9 +1,9 @@
 """
  # @ Author: Chaorong Chen
- # @ Create Time: 2022-07-19 21:12:52
+ # @ Create Time: 2022-07-14 21:12:52
  # @ Modified by: Chaorong Chen
  # @ Modified time: 2022-07-19 21:47:00
- # @ Description: 
+ # @ Description: reproductivity-MESA
  """
 
 from matplotlib.pyplot import cla
@@ -141,7 +141,23 @@ c1_integration = calculate_integration(
     X_list=all_X,
     y=c1_methylation[1],
     feature_selected=all_feature_selected,
-    classifiers=[ensembling_clf]
+    classifiers=[ensembling_clf],
+)
+
+# AUC summary for cohort 1
+
+c1_auc = pd.DataFrame(
+    [
+        _[-1]
+        for _ in [
+            c1_methylation_result,
+            c1_fragmentation_result,
+            c1_occupancy_result,
+            c1_fuzziness_result,
+            c1_integration,
+        ]
+    ],
+    index=["Methylation", "Fragmentation", "Occupancy", "Fuzziness", "Integration"],
 )
 
 """
@@ -243,12 +259,28 @@ c2_integration = calculate_integration(
     X_list=all_X,
     y=c2_methylation[1],
     feature_selected=all_feature_selected,
-    classifiers=[ensembling_clf]
+    classifiers=[ensembling_clf],
+)
+
+# AUC summary for cohort 2
+c2_auc = pd.DataFrame(
+    [
+        _[-1]
+        for _ in [
+            c2_methylation_result,
+            c2_fragmentation_result,
+            c2_occupancy_result,
+            c2_fuzziness_result,
+            c2_integration,
+        ]
+    ],
+    index=["Methylation", "Fragmentation", "Occupancy", "Fuzziness", "Integration"],
 )
 
 """
 cfTAPS
 """
+
 
 def readNconcat_cftaps(dir, featureType):
     ctrl_data = pd.read_table(
@@ -260,8 +292,11 @@ def readNconcat_cftaps(dir, featureType):
     pdac_data = pd.read_table(
         glob.glob(dir + "/PDAC." + featureType + "*")[0], header=0, index_col=0
     )
-    label = ctrl_data.shape[1] * [0] + hcc_data.shape[1] * [1] + pdac_data.shape[1] * [2]
+    label = (
+        ctrl_data.shape[1] * [0] + hcc_data.shape[1] * [1] + pdac_data.shape[1] * [2]
+    )
     return pd.concat([ctrl_data, hcc_data, pdac_data], axis=1), label
+
 
 cftaps_dir = "./processed_data/cfTAPS dataset"
 cftaps_methylation = readNconcat(cftaps_dir, "promoterEnhancer.methyRatio")
@@ -272,42 +307,53 @@ cftaps_occupancy = readNconcat(cftaps_dir, "allRefGene.TSS-PAS.fl500.occupancy.m
 ## Single-modality
 
 cftaps_PDAC_methylation_result = SBS_LOO(
-    X=cftaps_methylation[0].iloc[:,np.where(np.array(cftaps_methylation[1])!=1)[0]],
-    y=np.array(cftaps_methylation[1])[np.where(np.array(cftaps_methylation[1])!=1)[0]],
+    X=cftaps_methylation[0].iloc[:, np.where(np.array(cftaps_methylation[1]) != 1)[0]],
+    y=np.array(cftaps_methylation[1])[
+        np.where(np.array(cftaps_methylation[1]) != 1)[0]
+    ],
     estimator=svc,
     cv=cv_sbs,
     classifiers=[ensembling_clf],
     min_feature=2,
+    boruta_top_n_feature=300,
 )
 
 cftaps_PDAC_fragmentation_result = SBS_LOO(
-    X=cftaps_fragmentation[0].iloc[:,np.where(np.array(cftaps_fragmentation[1])!=1)[0]],
-    y=np.array(cftaps_fragmentation[1])[np.where(np.array(cftaps_fragmentation[1])!=1)[0]],
+    X=cftaps_fragmentation[0].iloc[
+        :, np.where(np.array(cftaps_fragmentation[1]) != 1)[0]
+    ],
+    y=np.array(cftaps_fragmentation[1])[
+        np.where(np.array(cftaps_fragmentation[1]) != 1)[0]
+    ],
     estimator=svc,
     cv=cv_sbs,
     classifiers=[ensembling_clf],
     min_feature=2,
+    boruta_top_n_feature=300,
 )
 
 cftaps_PDAC_occupancy_result = SBS_LOO(
-    X=cftaps_occupancy[0].iloc[:,np.where(np.array(cftaps_occupancy[1])!=1)[0]],
-    y=np.array(cftaps_occupancy[1])[np.where(np.array(cftaps_occupancy[1])!=1)[0]],
+    X=cftaps_occupancy[0].iloc[:, np.where(np.array(cftaps_occupancy[1]) != 1)[0]],
+    y=np.array(cftaps_occupancy[1])[np.where(np.array(cftaps_occupancy[1]) != 1)[0]],
     estimator=svc,
     cv=cv_sbs,
     classifiers=[ensembling_clf],
     min_feature=2,
+    boruta_top_n_feature=300,
 )
 
 ## Multimodal integtation
 all_X = [
-    cftaps_methylation[0].iloc[:,np.where(np.array(cftaps_methylation[1])!=1)[0]],
-    cftaps_fragmentation[0].iloc[:,np.where(np.array(cftaps_fragmentation[1])!=1)[0]],
-    cftaps_occupancy[0].iloc[:,np.where(np.array(cftaps_occupancy[1])!=1)[0]]
+    cftaps_methylation[0].iloc[:, np.where(np.array(cftaps_methylation[1]) != 1)[0]],
+    cftaps_fragmentation[0].iloc[
+        :, np.where(np.array(cftaps_fragmentation[1]) != 1)[0]
+    ],
+    cftaps_occupancy[0].iloc[:, np.where(np.array(cftaps_occupancy[1]) != 1)[0]],
 ]
 all_feature_selected = [
     cftaps_PDAC_methylation_result[0],
     cftaps_PDAC_fragmentation_result[0],
-    cftaps_PDAC_occupancy_result[0]
+    cftaps_PDAC_occupancy_result[0],
 ]
 cfTAPS_PDAC_integration = calculate_integration(
     X_list=all_X,
@@ -316,65 +362,146 @@ cfTAPS_PDAC_integration = calculate_integration(
     classifiers=[ensembling_clf],
 )
 
+# AUC summary for cfTAPS-Normal Vs PDAC
+cfTAPS_PDAC_auc = pd.DataFrame(
+    [
+        _[-1]
+        for _ in [
+            cftaps_PDAC_methylation_result,
+            cftaps_PDAC_fragmentation_result,
+            cftaps_PDAC_occupancy_result,
+            cfTAPS_PDAC_integration,
+        ]
+    ],
+    index=["Methylation", "Fragmentation", "Occupancy", "Integration"],
+)
+
 # 2-class classification: Control VS HCC
 ## Single-modality
 cftaps_HCC_methylation_result = SBS_LOO(
-    X=cftaps_methylation[0].iloc[:,np.where(np.array(cftaps_methylation[1])!=2)[0]],
-    y=np.array(cftaps_methylation[1])[np.where(np.array(cftaps_methylation[1])!=2)[0]],
+    X=cftaps_methylation[0].iloc[:, np.where(np.array(cftaps_methylation[1]) != 2)[0]],
+    y=np.array(cftaps_methylation[1])[
+        np.where(np.array(cftaps_methylation[1]) != 2)[0]
+    ],
     estimator=svc,
     cv=cv_sbs,
     classifiers=[ensembling_clf],
-    min_feature=2
+    min_feature=2,
 )
 
 cftaps_HCC_fragmentation_result = SBS_LOO(
-    X=cftaps_fragmentation[0].iloc[:,np.where(np.array(cftaps_fragmentation[1])!=2)[0]],
-    y=np.array(cftaps_fragmentation[1])[np.where(np.array(cftaps_fragmentation[1])!=2)[0]],
+    X=cftaps_fragmentation[0].iloc[
+        :, np.where(np.array(cftaps_fragmentation[1]) != 2)[0]
+    ],
+    y=np.array(cftaps_fragmentation[1])[
+        np.where(np.array(cftaps_fragmentation[1]) != 2)[0]
+    ],
     estimator=svc,
     cv=cv_sbs,
     classifiers=[ensembling_clf],
-    min_feature=2
+    min_feature=2,
 )
 
 cftaps_HCC_occupancy_result = SBS_LOO(
-    X=cftaps_occupancy[0].iloc[:,np.where(np.array(cftaps_occupancy[1])!=2)[0]],
-    y=np.array(cftaps_occupancy[1])[np.where(np.array(cftaps_occupancy[1])!=2)[0]],
+    X=cftaps_occupancy[0].iloc[:, np.where(np.array(cftaps_occupancy[1]) != 2)[0]],
+    y=np.array(cftaps_occupancy[1])[np.where(np.array(cftaps_occupancy[1]) != 2)[0]],
     estimator=svc,
     cv=cv_sbs,
     classifiers=[ensembling_clf],
-    min_feature=2
+    min_feature=2,
 )
 
 ## Multimodal integtation
 all_X = [
-    cftaps_methylation[0].iloc[:,np.where(np.array(cftaps_methylation[1])!=2)[0]],
-    cftaps_fragmentation[0].iloc[:,np.where(np.array(cftaps_fragmentation[1])!=2)[0]],
-    cftaps_occupancy[0].iloc[:,np.where(np.array(cftaps_occupancy[1])!=2)[0]]
+    cftaps_methylation[0].iloc[:, np.where(np.array(cftaps_methylation[1]) != 2)[0]],
+    cftaps_fragmentation[0].iloc[
+        :, np.where(np.array(cftaps_fragmentation[1]) != 2)[0]
+    ],
+    cftaps_occupancy[0].iloc[:, np.where(np.array(cftaps_occupancy[1]) != 2)[0]],
 ]
 all_feature_selected = [
     cftaps_HCC_methylation_result[0],
     cftaps_HCC_fragmentation_result[0],
-    cftaps_HCC_occupancy_result[0]
+    cftaps_HCC_occupancy_result[0],
 ]
-cfTAPS_PDAC_integration = calculate_integration(
+cfTAPS_HCC_integration = calculate_integration(
     X_list=all_X,
     y=cftaps_HCC_methylation_result[1],
     feature_selected=all_feature_selected,
     classifiers=[ensembling_clf],
 )
 
+# AUC summary for cfTAPS-Normal Vs HCC
+cfTAPS_HCC_auc = pd.DataFrame(
+    [
+        _[-1]
+        for _ in [
+            cftaps_HCC_methylation_result,
+            cftaps_HCC_fragmentation_result,
+            cftaps_HCC_occupancy_result,
+            cfTAPS_HCC_integration,
+        ]
+    ],
+    index=["Methylation", "Fragmentation", "Occupancy", "Integration"],
+)
 
+# 3-class classification: Control VS HCC VS PDAC
+## Single-modality
+cftaps_3class_methylation_result = SBS_LOO_3class(
+    X=cftaps_methylation[0],
+    y=cftaps_methylation[1],
+    estimator=svc,
+    cv=cv_sbs,
+    classifiers=[ensembling_clf],
+    min_feature=2,
+)
 
+cftaps_3class_fragmentation_result = SBS_LOO_3class(
+    X=cftaps_fragmentation[0],
+    y=cftaps_fragmentation[1],
+    estimator=svc,
+    cv=cv_sbs,
+    classifiers=[ensembling_clf],
+    min_feature=2,
+)
 
+cftaps_3class_occupancy_result = SBS_LOO_3class(
+    X=cftaps_occupancy[0],
+    y=cftaps_occupancy[1],
+    estimator=svc,
+    cv=cv_sbs,
+    classifiers=[ensembling_clf],
+    min_feature=2,
+)
 
+## Multimodal integtation
+all_X = [
+    cftaps_methylation[0],
+    cftaps_fragmentation[0],
+    cftaps_occupancy[0],
+]
+all_feature_selected = [
+    cftaps_3class_methylation_result[0],
+    cftaps_3class_fragmentation_result[0],
+    cftaps_3class_occupancy_result[0],
+]
+cfTAPS_3class_integration = calculate_integration_3class(
+    X_list=all_X,
+    y=cftaps_3class_methylation_result[1],
+    feature_selected=all_feature_selected,
+    classifiers=[ensembling_clf],
+)
 
-
-
-
-
-
-
-
-
-
-
+# Accuracy summary for cfTAPS-Normal Vs HCC
+cfTAPS_3class_auc = pd.DataFrame(
+    [
+        _[-1]
+        for _ in [
+            cftaps_3class_methylation_result,
+            cftaps_3class_fragmentation_result,
+            cftaps_3class_occupancy_result,
+            cfTAPS_3class_integration,
+        ]
+    ],
+    index=["Methylation", "Fragmentation", "Occupancy", "Integration"],
+)

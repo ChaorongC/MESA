@@ -45,7 +45,7 @@ sbs_c1_t2 = SBS_LOO(X=X_c1_t2,
              boruta_top_n_feature=1000)
 
 #Integrate results(feature selected) of type 1 and type 2 features for cohort 1
-sbs_c1_combine = calculate_combine(
+sbs_c1_combine = calculate_integration(
     X=[X_c1_t1, X_c1_t2],
     y=y_cohort1,
     feature_selected=[sbs_c1_t1[0], sbs_c1_t2[0]],
