@@ -19,10 +19,13 @@ from sklearn.model_selection import (
 )
 from joblib import Parallel, delayed
 from itertools import combinations
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import RandomForestClassifier, VotingClassifier
 from sklearn.svm import SVC, LinearSVC
 from sklearn.metrics import roc_auc_score
 from boruta import BorutaPy
+from sklearn.linear_model import LogisticRegression
+from deepforest import CascadeForestClassifier
+from sklearn.svm import SVC
 
 # Code for missing value imputation
 
@@ -194,7 +197,7 @@ def SBS_LOO(
         best_combination_dim = np.where(best_scores == np.max(best_scores))[0][-1]
         best_combination_loc = np.argmax(all_scores[best_combination_dim])
         feature_selected = all_subsets[best_combination_dim][best_combination_loc]
-        feature_selected_all.append(X_train_temp.columns[feature_selected])
+        feature_selected_all.append(feature_selected)
         print(
             "Best combination:", all_subsets[best_combination_dim][best_combination_loc]
         )
@@ -220,14 +223,14 @@ def SBS_LOO(
     return feature_selected_all, y_true, y_pred_all, auc
 
 
-# Combine SBS results on different types of features
+# Integrate2 SBS results on different types of features
 
 
-def calculate_combine(X, y, feature_selected, classifiers):
+def calculate_integration(X_list, y, feature_selected, classifiers):
     """
     Parameters
     ----------
-    X : list of dataframes of shape (n_features, n_samples)
+    X_list : list of dataframes of shape (n_features, n_samples)
         Input samples.
     y : array-like of shape (n_samples,)
         Target values/labels.
