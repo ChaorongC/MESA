@@ -15,6 +15,7 @@
   -  joblib
   -  itertools
   -  boruta_py
+  -  deep-forest
 
 ## Installation
 Clone the repository with `git`:
