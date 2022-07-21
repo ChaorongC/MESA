@@ -48,7 +48,7 @@ SBS_LOO(X,
         scoring='roc_auc',
         boruta_top_n_feature=1000)
 ```
-__X__ : dataframe of shape (n_samples, n_features)
+__X__ : dataframe of shape (n_features, n_samples)
   > Input samples.
   > A matrix containing samples as rows with features as columns.
    
@@ -86,7 +86,7 @@ calculate_combine(X,
                   feature_selected, 
                   classifiers)
 ```
-__X__ : list of dataframes of shape (n_samples, n_features)
+__X__ : list of dataframes of shape (n_features, n_samples)
   >Input samples.
   
 __y__ : array-like of shape (n_samples,)
