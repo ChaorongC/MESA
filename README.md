@@ -37,7 +37,7 @@ The function `MESA_single()` in 'MESA.py' is for analysis on a single type of fe
 ## Example
 Check the Jupyter notebook `demo.ipynb`.
 
-We demonstrate in `demo.nb` how **MESA** performs analysis on different types of features and combines them into a multimodal cancer detection model.
+We demonstrate in `demo.ipynb` how **MESA** performs analysis on different types of features and combines them into a multimodal cancer detection model.
 
 #### Parameters
 ```shell
