@@ -158,6 +158,7 @@ c1_auc = pd.DataFrame(
         ]
     ],
     index=["Methylation", "Fragmentation", "Occupancy", "Fuzziness", "Integration"],
+    columns=[str(ensembling_clf)],
 )
 
 """
@@ -275,6 +276,7 @@ c2_auc = pd.DataFrame(
         ]
     ],
     index=["Methylation", "Fragmentation", "Occupancy", "Fuzziness", "Integration"],
+    columns=[str(ensembling_clf)],
 )
 
 """
@@ -374,6 +376,7 @@ cfTAPS_PDAC_auc = pd.DataFrame(
         ]
     ],
     index=["Methylation", "Fragmentation", "Occupancy", "Integration"],
+    columns=[str(ensembling_clf)],
 )
 
 # 2-class classification: Control VS HCC
@@ -443,6 +446,7 @@ cfTAPS_HCC_auc = pd.DataFrame(
         ]
     ],
     index=["Methylation", "Fragmentation", "Occupancy", "Integration"],
+    columns=[str(ensembling_clf)],
 )
 
 # 3-class classification: Control VS HCC VS PDAC
@@ -504,4 +508,5 @@ cfTAPS_3class_auc = pd.DataFrame(
         ]
     ],
     index=["Methylation", "Fragmentation", "Occupancy", "Integration"],
+    columns=[str(ensembling_clf)],
 )
