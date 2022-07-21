@@ -80,7 +80,7 @@ def imputation_cv(X, train_index, test_index, ratio=0.9):
 # Code for sequntial backward selection
 
 
-def SBS_LOO(
+def MESA_single(
     X,
     y,
     estimator,
@@ -136,9 +136,9 @@ def SBS_LOO(
     y_true = []
     feature_selected_all = []
     num = 1
-    if boruta_top_n_feature > X.shape[1]:
-        boruta_top_n_feature = X.shape[1]
-    cv_index = cv_method.split(X, y)
+    if boruta_top_n_feature > X.shape[0]:
+        boruta_top_n_feature = X.shape[0]
+    cv_index = cv_method.split(X.T, y)
     for train_index, test_index in cv_index:
         print("=============== No.", num, " LOO iteration ===============")
         num += 1
@@ -190,7 +190,7 @@ def SBS_LOO(
             indices = combination[best]
             all_scores.append(scores)
             all_subsets.append(combination)
-            print("Dimension:", dim, " Score:", np.max(scores))
+            #print("Dimension:", dim, " Score:", np.max(scores))
             dim -= 1
         # best feature subset at each featue size
         best_scores = [np.max(i) for i in all_scores]
@@ -226,7 +226,7 @@ def SBS_LOO(
 # Integrate2 SBS results on different types of features
 
 
-def calculate_integration(X_list, y, feature_selected, classifiers):
+def MESA_integration(X_list, y, feature_selected, classifiers):
     """
     Parameters
     ----------
@@ -256,29 +256,19 @@ def calculate_integration(X_list, y, feature_selected, classifiers):
     for run in range(len(cv_index)):
         train_index, test_index = cv_index[run]
         y_train, y_test = np.array(y)[train_index], np.array(y)[test_index]
-        X_temp = [x.iloc[:, list(fea[run])] for x, fea in zip(X_list, feature_selected)]
+        X_temp = [x.iloc[list(fea[run]),:] for x, fea in zip(X_list, feature_selected)]
         y_train, y_test = np.array(y)[train_index], np.array(y)[test_index]
-        X_train_temp = [
+        X_train = [
             imputation_cv(X1, train_index, test_index, 0.9)[0] for X1 in X_temp
         ]
-        X_test_temp = [
-            imputation_cv(X1, train_index, test_index, 0.9)[1] for X1 in X_temp
-        ]
-        X_train = [
-            _.iloc[:, list(fea[run])].values
-            for _, fea in zip(X_train_temp, feature_selected)
-        ]
         X_test = [
-            _.iloc[:, list(fea[run])].values
-            for _, fea in zip(X_test_temp, feature_selected)
+            imputation_cv(X1, train_index, test_index, 0.9)[1] for X1 in X_temp
         ]
         X_train_std = []
         X_test_std = []
         for i in range(len(X_list)):
             X_train_std.append(pd.DataFrame(scaler.fit_transform(X_train[i])))
             X_test_std.append(pd.DataFrame(scaler.transform(X_test[i])))
-        print(X_test_std)
-        print(X_train_std)
         X_train_combine = pd.concat(X_train_std, axis=1)
         X_train_combine.columns = np.arange(X_train_combine.shape[1])
         X_test_combine = pd.concat(X_test_std, axis=1)
@@ -298,7 +288,7 @@ def calculate_integration(X_list, y, feature_selected, classifiers):
 
 
 
-def SBS_LOO_3class(
+def MESA_3class(
     X,
     y,
     estimator,
@@ -354,9 +344,9 @@ def SBS_LOO_3class(
     y_true = []
     feature_selected_all = []
     num = 1
-    if boruta_top_n_feature > X.shape[1]:
-        boruta_top_n_feature = X.shape[1]
-    cv_index = cv_method.split(X, y)
+    if boruta_top_n_feature > X.shape[0]:
+        boruta_top_n_feature = X.shape[0]
+    cv_index = cv_method.split(X.T, y)
     for train_index, test_index in cv_index:
         print("=============== No.", num, " LOO iteration ===============")
         num += 1
@@ -408,7 +398,7 @@ def SBS_LOO_3class(
             indices = combination[best]
             all_scores.append(scores)
             all_subsets.append(combination)
-            print("Dimension:", dim, " Score:", np.max(scores))
+            #print("Dimension:", dim, " Score:", np.max(scores))
             dim -= 1
         # best feature subset at each featue size
         best_scores = [np.max(i) for i in all_scores]
@@ -441,7 +431,7 @@ def SBS_LOO_3class(
     return feature_selected_all, y_true, y_pred_all, acc
     
     
-def calculate_integration_3class(X_list, y, feature_selected, classifiers):
+def MESA_integration_3class(X_list, y, feature_selected, classifiers):
     """
     Parameters
     ----------

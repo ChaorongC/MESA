@@ -56,7 +56,7 @@ c1_fuzziness_pas = readNconcat(cohort1_dir, "PAS.fuzziness-1kbWindow")
 c1_fuzziness_tss = readNconcat(cohort1_dir, "TSS.fuzziness-1kbWindow")
 
 # Single-modality: run analysis for each feature type
-c1_methylation_result = SBS_LOO(
+c1_methylation_result = MESA_single(
     X=c1_methylation[0],
     y=c1_methylation[1],
     estimator=svc,
@@ -64,7 +64,7 @@ c1_methylation_result = SBS_LOO(
     classifiers=[ensembling_clf],
     min_feature=2,
 )
-c1_fragmentation_result = SBS_LOO(
+c1_fragmentation_result = MESA_single(
     X=c1_fragmentation[0],
     y=c1_fragmentation[1],
     estimator=svc,
@@ -72,7 +72,7 @@ c1_fragmentation_result = SBS_LOO(
     classifiers=[ensembling_clf],
     min_feature=2,
 )
-c1_occupancy_pas_result = SBS_LOO(
+c1_occupancy_pas_result = MESA_single(
     X=c1_occupancy_pas[0],
     y=c1_occupancy_pas[1],
     estimator=svc,
@@ -80,7 +80,7 @@ c1_occupancy_pas_result = SBS_LOO(
     classifiers=[ensembling_clf],
     min_feature=2,
 )
-c1_occupancy_tss_result = SBS_LOO(
+c1_occupancy_tss_result = MESA_single(
     X=c1_occupancy_tss[0],
     y=c1_occupancy_tss[1],
     estimator=svc,
@@ -88,7 +88,7 @@ c1_occupancy_tss_result = SBS_LOO(
     classifiers=[ensembling_clf],
     min_feature=2,
 )
-c1_fuzziness_pas_result = SBS_LOO(
+c1_fuzziness_pas_result = MESA_single(
     X=c1_fuzziness_pas[0],
     y=c1_fuzziness_pas[1],
     estimator=svc,
@@ -96,7 +96,7 @@ c1_fuzziness_pas_result = SBS_LOO(
     classifiers=[ensembling_clf],
     min_feature=2,
 )
-c1_fuzziness_tss_result = SBS_LOO(
+c1_fuzziness_tss_result = MESA_single(
     X=c1_fuzziness_tss[0],
     y=c1_fuzziness_tss[1],
     estimator=svc,
@@ -105,14 +105,14 @@ c1_fuzziness_tss_result = SBS_LOO(
     min_feature=2,
 )
 
-c1_occupancy_result = calculate_integration(
+c1_occupancy_result = MESA_integration(
     X_list=[c1_occupancy_pas[0], c1_occupancy_tss[0]],
     y=c1_occupancy_pas[1],
     feature_selected=[c1_occupancy_pas_result[0], c1_occupancy_tss_result[0]],
     classifiers=[ensembling_clf],
 )
 
-c1_fuzziness_result = calculate_integration(
+c1_fuzziness_result = MESA_integration(
     X_list=[c1_fuzziness_pas[0], c1_fuzziness_tss[0]],
     y=c1_occupancy_pas[1],
     feature_selected=[c1_fuzziness_pas_result[0], c1_fuzziness_tss_result[0]],
@@ -137,7 +137,7 @@ all_feature_selected = [
     c1_fuzziness_tss_result[0],
 ]
 
-c1_integration = calculate_integration(
+c1_integration = MESA_integration(
     X_list=all_X,
     y=c1_methylation[1],
     feature_selected=all_feature_selected,
@@ -174,7 +174,7 @@ c2_fuzziness_tss = readNconcat(cohort2_dir, "TSS.fuzziness")
 
 
 # Single-modality: run analysis for each feature type
-c2_methylation_result = SBS_LOO(
+c2_methylation_result = MESA_single(
     X=c2_methylation[0],
     y=c2_methylation[1],
     estimator=svc,
@@ -182,7 +182,7 @@ c2_methylation_result = SBS_LOO(
     classifiers=[ensembling_clf],
     min_feature=2,
 )
-c2_fragmentation_result = SBS_LOO(
+c2_fragmentation_result = MESA_single(
     X=c2_fragmentation[0],
     y=c2_fragmentation[1],
     estimator=svc,
@@ -190,7 +190,7 @@ c2_fragmentation_result = SBS_LOO(
     classifiers=[ensembling_clf],
     min_feature=2,
 )
-c2_occupancy_pas_result = SBS_LOO(
+c2_occupancy_pas_result = MESA_single(
     X=c2_occupancy_pas[0],
     y=c2_occupancy_pas[1],
     estimator=svc,
@@ -198,7 +198,7 @@ c2_occupancy_pas_result = SBS_LOO(
     classifiers=[ensembling_clf],
     min_feature=2,
 )
-c2_occupancy_tss_result = SBS_LOO(
+c2_occupancy_tss_result = MESA_single(
     X=c2_occupancy_tss[0],
     y=c2_occupancy_tss[1],
     estimator=svc,
@@ -206,7 +206,7 @@ c2_occupancy_tss_result = SBS_LOO(
     classifiers=[ensembling_clf],
     min_feature=2,
 )
-c2_fuzziness_pas_result = SBS_LOO(
+c2_fuzziness_pas_result = MESA_single(
     X=c2_fuzziness_pas[0],
     y=c2_fuzziness_pas[1],
     estimator=svc,
@@ -214,7 +214,7 @@ c2_fuzziness_pas_result = SBS_LOO(
     classifiers=[ensembling_clf],
     min_feature=2,
 )
-c2_fuzziness_tss_result = SBS_LOO(
+c2_fuzziness_tss_result = MESA_single(
     X=c2_fuzziness_tss[0],
     y=c2_fuzziness_tss[1],
     estimator=svc,
@@ -223,14 +223,14 @@ c2_fuzziness_tss_result = SBS_LOO(
     min_feature=2,
 )
 
-c2_occupancy_result = calculate_integration(
+c2_occupancy_result = MESA_integration(
     X_list=[c2_occupancy_pas[0], c2_occupancy_tss[0]],
     y=c2_occupancy_pas[1],
     feature_selected=[c2_occupancy_pas_result[0], c2_occupancy_tss_result[0]],
     classifiers=[ensembling_clf],
 )
 
-c2_fuzziness_result = calculate_integration(
+c2_fuzziness_result = MESA_integration(
     X_list=[c2_fuzziness_pas[0], c2_fuzziness_tss[0]],
     y=c2_occupancy_pas[1],
     feature_selected=[c2_fuzziness_pas_result[0], c2_fuzziness_tss_result[0]],
@@ -255,7 +255,7 @@ all_feature_selected = [
     c2_fuzziness_tss_result[0],
 ]
 
-c2_integration = calculate_integration(
+c2_integration = MESA_integration(
     X_list=all_X,
     y=c2_methylation[1],
     feature_selected=all_feature_selected,
@@ -306,7 +306,7 @@ cftaps_occupancy = readNconcat(cftaps_dir, "allRefGene.TSS-PAS.fl500.occupancy.m
 # 2-class classification: Control VS PDAC
 ## Single-modality
 
-cftaps_PDAC_methylation_result = SBS_LOO(
+cftaps_PDAC_methylation_result = MESA_single(
     X=cftaps_methylation[0].iloc[:, np.where(np.array(cftaps_methylation[1]) != 1)[0]],
     y=np.array(cftaps_methylation[1])[
         np.where(np.array(cftaps_methylation[1]) != 1)[0]
@@ -318,7 +318,7 @@ cftaps_PDAC_methylation_result = SBS_LOO(
     boruta_top_n_feature=300,
 )
 
-cftaps_PDAC_fragmentation_result = SBS_LOO(
+cftaps_PDAC_fragmentation_result = MESA_single(
     X=cftaps_fragmentation[0].iloc[
         :, np.where(np.array(cftaps_fragmentation[1]) != 1)[0]
     ],
@@ -332,7 +332,7 @@ cftaps_PDAC_fragmentation_result = SBS_LOO(
     boruta_top_n_feature=300,
 )
 
-cftaps_PDAC_occupancy_result = SBS_LOO(
+cftaps_PDAC_occupancy_result = MESA_single(
     X=cftaps_occupancy[0].iloc[:, np.where(np.array(cftaps_occupancy[1]) != 1)[0]],
     y=np.array(cftaps_occupancy[1])[np.where(np.array(cftaps_occupancy[1]) != 1)[0]],
     estimator=svc,
@@ -355,7 +355,7 @@ all_feature_selected = [
     cftaps_PDAC_fragmentation_result[0],
     cftaps_PDAC_occupancy_result[0],
 ]
-cfTAPS_PDAC_integration = calculate_integration(
+cfTAPS_PDAC_integration = MESA_integration(
     X_list=all_X,
     y=cftaps_PDAC_methylation_result[1],
     feature_selected=all_feature_selected,
@@ -378,7 +378,7 @@ cfTAPS_PDAC_auc = pd.DataFrame(
 
 # 2-class classification: Control VS HCC
 ## Single-modality
-cftaps_HCC_methylation_result = SBS_LOO(
+cftaps_HCC_methylation_result = MESA_single(
     X=cftaps_methylation[0].iloc[:, np.where(np.array(cftaps_methylation[1]) != 2)[0]],
     y=np.array(cftaps_methylation[1])[
         np.where(np.array(cftaps_methylation[1]) != 2)[0]
@@ -389,7 +389,7 @@ cftaps_HCC_methylation_result = SBS_LOO(
     min_feature=2,
 )
 
-cftaps_HCC_fragmentation_result = SBS_LOO(
+cftaps_HCC_fragmentation_result = MESA_single(
     X=cftaps_fragmentation[0].iloc[
         :, np.where(np.array(cftaps_fragmentation[1]) != 2)[0]
     ],
@@ -402,7 +402,7 @@ cftaps_HCC_fragmentation_result = SBS_LOO(
     min_feature=2,
 )
 
-cftaps_HCC_occupancy_result = SBS_LOO(
+cftaps_HCC_occupancy_result = MESA_single(
     X=cftaps_occupancy[0].iloc[:, np.where(np.array(cftaps_occupancy[1]) != 2)[0]],
     y=np.array(cftaps_occupancy[1])[np.where(np.array(cftaps_occupancy[1]) != 2)[0]],
     estimator=svc,
@@ -424,7 +424,7 @@ all_feature_selected = [
     cftaps_HCC_fragmentation_result[0],
     cftaps_HCC_occupancy_result[0],
 ]
-cfTAPS_HCC_integration = calculate_integration(
+cfTAPS_HCC_integration = MESA_integration(
     X_list=all_X,
     y=cftaps_HCC_methylation_result[1],
     feature_selected=all_feature_selected,
@@ -447,7 +447,7 @@ cfTAPS_HCC_auc = pd.DataFrame(
 
 # 3-class classification: Control VS HCC VS PDAC
 ## Single-modality
-cftaps_3class_methylation_result = SBS_LOO_3class(
+cftaps_3class_methylation_result = MESA_3class(
     X=cftaps_methylation[0],
     y=cftaps_methylation[1],
     estimator=svc,
@@ -456,7 +456,7 @@ cftaps_3class_methylation_result = SBS_LOO_3class(
     min_feature=2,
 )
 
-cftaps_3class_fragmentation_result = SBS_LOO_3class(
+cftaps_3class_fragmentation_result = MESA_3class(
     X=cftaps_fragmentation[0],
     y=cftaps_fragmentation[1],
     estimator=svc,
@@ -465,7 +465,7 @@ cftaps_3class_fragmentation_result = SBS_LOO_3class(
     min_feature=2,
 )
 
-cftaps_3class_occupancy_result = SBS_LOO_3class(
+cftaps_3class_occupancy_result = MESA_3class(
     X=cftaps_occupancy[0],
     y=cftaps_occupancy[1],
     estimator=svc,
@@ -485,7 +485,7 @@ all_feature_selected = [
     cftaps_3class_fragmentation_result[0],
     cftaps_3class_occupancy_result[0],
 ]
-cfTAPS_3class_integration = calculate_integration_3class(
+cfTAPS_3class_integration = MESA_integration_3class(
     X_list=all_X,
     y=cftaps_3class_methylation_result[1],
     feature_selected=all_feature_selected,
