@@ -31,11 +31,11 @@ unzip MESA-main.zip
 cd MESA-main
 ```
 ## Usage
-In the root directory, there are two Python scripts: `MESA.py` and `demo.nb.`
+In the root directory, there are two Python scripts: `MESA.py` and `demo.ipynb.`
 The function `MESA_single()` in 'MESA.py' is for analysis on a single type of feature, and the function `MESA_integration()` is for combining single results on different types of features and returning the multimodal prediction result.
 
 ## Example
-Check `demo.nb`.
+Check the Jupyter notebook `demo.ipynb`.
 
 We demonstrate in `demo.nb` how **MESA** performs analysis on different types of features and combines them into a multimodal cancer detection model.
 
