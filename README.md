@@ -31,13 +31,17 @@ unzip MESA-main.zip
 cd MESA-main
 ```
 ## Usage
-In the root directory, there are two Python scripts: `MESA.py` and `demo.py.`
-The function `SBS LOO()` in 'MESA.py' is for sequential backward selection (SBS) in a single type of feature, and the function `calculate combine()` is for combining SBS results on different types of features and returning the multimodal prediction result.
-We demonstrate in `demo.py` how **MESA** performs sequential feature selection on different types of features and combines them into a multimodal cancer detection model.
+In the root directory, there are two Python scripts: `MESA.py` and `demo.nb.`
+The function `MESA_single()` in 'MESA.py' is for analysis on a single type of feature, and the function `MESA_integration()` is for combining single results on different types of features and returning the multimodal prediction result.
+
+## Example
+Check `demo.nb`.
+
+We demonstrate in `demo.nb` how **MESA** performs analysis on different types of features and combines them into a multimodal cancer detection model.
 
 #### Parameters
 ```shell
-SBS_LOO(X,
+MESA_single(X,
         y,
         estimator,
         classifiers=[],
@@ -81,7 +85,7 @@ __boruta_top_n_feature__ : int, default=1000
   >Features to select for SBS in the Boruta algorithm. 
     
 ```shell
-calculate_combine(X, 
+MESA_integration(X_list, 
                   y, 
                   feature_selected, 
                   classifiers)
