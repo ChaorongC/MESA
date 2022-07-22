@@ -1,12 +1,14 @@
 # MESA
 
-<ins>M</ins>ultimodal <ins>E</ins>pigenetic <ins>S</ins>equencing <ins>A</ins>nalysis (MESA) of Cell-free DNA for Non-invasive Cancer Detection
+<ins>M</ins>ultimodal <ins>E</ins>pigenetic <ins>S</ins>equencing <ins>A</ins>nalysis (MESA) is a flexible and sensitive method of capturing and integrating multimodal epigenetic information of cfDNA using a single experimental assay.
+For reproducing the major results of the original MESA paper, please refer to this tutorial: https://rpubs.com/LiYumei/926228.
 
 ## Dependencies
 - Python >=3.6
 - deepTools
 - bedtools
 - DANPOS2
+- BSMAP
 - UCSC tools
 - Python Package
   -  pandas
@@ -31,13 +33,11 @@ unzip MESA-main.zip
 cd MESA-main
 ```
 ## Usage
-In the root directory, there are two Python scripts: `MESA.py` and `demo.ipynb.`
-The function `MESA_single()` in 'MESA.py' is for analysis on a single type of feature, and the function `MESA_integration()` is for combining single results on different types of features and returning the multimodal prediction result.
+The Python script `MESA.py` in the root directory is the main program for MESA. 
+The function `MESA_single()` in 'MESA.py' is for analysis on a single type of feature, and the function `MESA_integration()` is for combining results on different types of features and returning the multimodal prediction result.
 
 ## Example
-Check the Jupyter notebook `demo.ipynb`.
-
-We demonstrate in `demo.ipynb` how **MESA** performs analysis on different types of features and combines them into a multimodal cancer detection model.
+Check the Jupyter notebook `demo.ipynb` for a tutorial on how to run MESA.
 
 #### Parameters
 ```shell
