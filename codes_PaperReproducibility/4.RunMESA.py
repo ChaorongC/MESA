@@ -119,6 +119,23 @@ c1_fuzziness_result = MESA_integration(
     classifiers=[ensembling_clf],
 )
 
+c1_nucleosome_result = MESA_integration(
+    X_list=[
+        c1_occupancy_pas[0],
+        c1_occupancy_tss[0],
+        c1_fuzziness_pas[0],
+        c1_fuzziness_tss[0],
+    ],
+    y=c1_occupancy_pas[1],
+    feature_selected=[
+        c1_occupancy_pas_result[0],
+        c1_occupancy_tss_result[0],
+        c1_fuzziness_pas_result[0],
+        c1_fuzziness_tss_result[0],
+    ],
+    classifiers=[ensembling_clf],
+)
+
 # Multimodal integtation
 all_X = [
     c1_methylation[0],
@@ -238,6 +255,22 @@ c2_fuzziness_result = MESA_integration(
     classifiers=[ensembling_clf],
 )
 
+c2_nucleosome_result = MESA_integration(
+    X_list=[
+        c2_occupancy_pas[0],
+        c2_occupancy_tss[0],
+        c2_fuzziness_pas[0],
+        c2_fuzziness_tss[0],
+    ],
+    y=c2_occupancy_pas[1],
+    feature_selected=[
+        c2_occupancy_pas_result[0],
+        c2_occupancy_tss_result[0],
+        c2_fuzziness_pas_result[0],
+        c2_fuzziness_tss_result[0],
+    ],
+    classifiers=[ensembling_clf],
+)
 # Multimodal integtation
 all_X = [
     c2_methylation[0],
@@ -510,3 +543,143 @@ cfTAPS_3class_auc = pd.DataFrame(
     index=["Methylation", "Fragmentation", "Occupancy", "Integration"],
     columns=[str(ensembling_clf)],
 )
+
+
+"""
+Probability for ROC Curves
+"""
+# Figure 4
+## Cohort 1
+c1_nucleosome_probability = pd.DataFrame(
+    [
+        c1_occupancy_result[1],
+        c1_occupancy_result[2][0],
+        c1_fuzziness_result[2][0],
+        c1_occupancy_pas_result[2][0],
+        c1_occupancy_tss_result[2][0],
+        c1_fuzziness_pas_result[2][0],
+        c1_fuzziness_tss_result[2][0],
+        c1_nucleosome_result[2][0],
+    ],
+    index=[
+        "Label",
+        "Occupancy_PAS+TSS",
+        "Fuzziness_PAS+TSS",
+        "Occupancy_PAS",
+        "Occupancy_TSS",
+        "Fuzziness_PAS",
+        "Fuzziness_TSS",
+        "Occupancy+Fuzziness",
+    ],
+    columns=c1_occupancy_result[0].columns,
+).T.to_csv("Cohort1_nucleosome_probability.csv", index=True)
+## Cohort 2
+c2_nucleosome_probability = pd.DataFrame(
+    [
+        c2_occupancy_result[1],
+        c2_occupancy_result[2][0],
+        c2_fuzziness_result[2][0],
+        c2_occupancy_pas_result[2][0],
+        c2_occupancy_tss_result[2][0],
+        c2_fuzziness_pas_result[2][0],
+        c2_fuzziness_tss_result[2][0],
+        c2_nucleosome_result[2][0],
+    ],
+    index=[
+        "Label",
+        "Occupancy_PAS+TSS",
+        "Fuzziness_PAS+TSS",
+        "Occupancy_PAS",
+        "Occupancy_TSS",
+        "Fuzziness_PAS",
+        "Fuzziness_TSS",
+        "Occupancy+Fuzziness",
+    ],
+    columns=c2_occupancy_result[0].columns,
+).T.to_csv("Cohort2_nucleosome_probability.csv", index=True)
+
+# Figure 5
+## Cohort 1
+c1_probability = pd.DataFrame(
+    [
+        c1_methylation_result[1],
+        c1_methylation_result[2][0],
+        c1_fragmentation_result[2][0],
+        c1_occupancy_result[2][0],
+        c1_fuzziness_result[2][0],
+        c1_integration[2][0],
+    ],
+    index=[
+        "Label",
+        "Methylation",
+        "Fragmentation",
+        "Occupancy",
+        "Fuzziness",
+        "Multimodal",
+    ],
+    columns=c1_methylation[0].columns,
+).T.to_csv("Cohort1_probability.csv", index=True)
+
+## Cohort 2
+c2_probability = pd.DataFrame(
+    [
+        c2_methylation_result[1],
+        c2_methylation_result[2][0],
+        c2_fragmentation_result[2][0],
+        c2_occupancy_result[2][0],
+        c2_fuzziness_result[2][0],
+        c2_integration[2][0],
+    ],
+    index=[
+        "Label",
+        "Methylation",
+        "Fragmentation",
+        "Occupancy",
+        "Fuzziness",
+        "Multimodal",
+    ],
+    columns=c2_methylation[0].columns,
+).T.to_csv("Cohort2_probability.csv", index=True)
+
+# Figure 6
+# HCC vs. Control
+cftaps_HCC_probability = pd.DataFrame(
+    [
+        cftaps_HCC_methylation_result[1],
+        cftaps_HCC_methylation_result[2][0],
+        cftaps_HCC_fragmentation_result[2][0],
+        cftaps_HCC_occupancy_result[2][0],
+        cfTAPS_HCC_integration[2][0],
+    ],
+    index=["Label", "Methylation", "Fragmentation", "Occupancy", "Multimodal"],
+    columns=cftaps_methylation[0]
+    .iloc[:, np.where(np.array(cftaps_methylation[1]) != 2)[0]]
+    .columns,
+).T.to_csv("cfTAPS_HCC_probability.csv", index=True)
+# PDAC vs. Control
+cftaps_HCC_probability = pd.DataFrame(
+    [
+        cftaps_PDAC_methylation_result[1],
+        cftaps_PDAC_methylation_result[2][0],
+        cftaps_PDAC_fragmentation_result[2][0],
+        cftaps_PDAC_occupancy_result[2][0],
+        cfTAPS_PDAC_integration[2][0],
+    ],
+    index=["Label", "Methylation", "Fragmentation", "Occupancy", "Multimodal"],
+    columns=cftaps_methylation[0]
+    .iloc[:, np.where(np.array(cftaps_methylation[1]) != 1)[0]]
+    .columns,
+).T.to_csv("cfTAPS_PDAC_probability.csv", index=True)
+
+# 3-class predicted label
+cftaps_3class_probability = pd.DataFrame(
+    [
+        cftaps_3class_methylation_result[1],
+        cftaps_3class_methylation_result[2][0],
+        cftaps_3class_fragmentation_result[2][0],
+        cftaps_3class_occupancy_result[2][0],
+        cfTAPS_3class_integration[2][0],
+    ],
+    index=["Label", "Methylation", "Fragmentation", "Occupancy", "Multimodal"],
+    columns=cftaps_methylation[0].columns,
+).T.to_csv("cfTAPS_3class_probability.csv", index=True)
