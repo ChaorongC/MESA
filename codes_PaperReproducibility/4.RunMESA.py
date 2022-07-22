@@ -642,7 +642,7 @@ c2_probability = pd.DataFrame(
 ).T.to_csv("Cohort2_probability.csv", index=True)
 
 # Figure 6
-# HCC vs. Control
+## HCC vs. Control
 cftaps_HCC_probability = pd.DataFrame(
     [
         cftaps_HCC_methylation_result[1],
@@ -656,7 +656,7 @@ cftaps_HCC_probability = pd.DataFrame(
     .iloc[:, np.where(np.array(cftaps_methylation[1]) != 2)[0]]
     .columns,
 ).T.to_csv("cfTAPS_HCC_probability.csv", index=True)
-# PDAC vs. Control
+## PDAC vs. Control
 cftaps_HCC_probability = pd.DataFrame(
     [
         cftaps_PDAC_methylation_result[1],
@@ -671,7 +671,7 @@ cftaps_HCC_probability = pd.DataFrame(
     .columns,
 ).T.to_csv("cfTAPS_PDAC_probability.csv", index=True)
 
-# 3-class predicted label
+## 3-class predicted label
 cftaps_3class_probability = pd.DataFrame(
     [
         cftaps_3class_methylation_result[1],
