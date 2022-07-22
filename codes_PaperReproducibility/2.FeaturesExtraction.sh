@@ -1,16 +1,16 @@
 #!/bin/bash
 
 ### Author: Jianfeng Xu and Yumei Li
-### Date: 06/27/2022
+### Date: 07/21/2022
 ### Softwares needed: deepTools, bedtools, DANPOS2, UCSC tools, 
 
-# Reference genome combining human genome (hg19), Labmda, and pUC19 sequences
-refFasta = /shared/reference/Homo_sapiens/UCSC/hg19/Sequence/WholeGenomeFasta/hg19_Lambda_pUC19/hg19_Lambda_pUC19.fa
+# Reference genome combining human genome (hg19), Labmda sequences
+refFasta = /shared/reference/Homo_sapiens/UCSC/hg19/Sequence/WholeGenomeFasta/hg19_Lambda.fa
 dir = "/data/fastqFiles/" # This is the current working directtory
 size_range = '80_200'
 name = "sampleID" # This is the name of the current processed sample.
 f_bam=${dir}"/bsmap_out/"${name}'_psorted_filtered_'${size_range}'.bam'
-f_panel='/data/Probe_panel_V2_hg19_lambda_pUC19.bed' # The bed file for the target regions.
+f_panel='/data/Probe_panel_hg19.bed' # The bed file for the target regions.
 
 #1. DNA methylation
 f_out=${dir}"/bsmap_out/"${name}"_meth_combined_length_"${size_range}".txt"
