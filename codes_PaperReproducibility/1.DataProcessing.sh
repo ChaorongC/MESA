@@ -1,11 +1,11 @@
 #!/bin/bash
 
 ### Author: Jianfeng Xu and Yumei Li
-### Date: 06/27/2022
-### Softwares needed: TrimGalore, BSMAP, Samtools, Bedtools, deepTools, 
+### Date: 07/21/2022
+### Softwares needed: TrimGalore, BSMAP, Samtools, deepTools, 
 
-# Reference genome combining human genome (hg19), Labmda, and pUC19 sequences
-refFasta = /shared/reference/Homo_sapiens/UCSC/hg19/Sequence/WholeGenomeFasta/hg19_Lambda_pUC19/hg19_Lambda_pUC19.fa
+# Reference genome combining human genome (hg19), Labmda sequences
+refFasta = /shared/reference/Homo_sapiens/UCSC/hg19/Sequence/WholeGenomeFasta/hg19_Lambda.fa
 
 #1. Pre-mapping quality control
 dir = "/data/fastqFiles/" #This the directory storing all the fq files.
@@ -37,7 +37,7 @@ done
 
 #3. Bam file filter
 cd bsmap_out
-f_panel='/data/Probe_panel_V2_hg19_lambda_pUC19.bed' # The bed file for the target regions.
+f_panel='/data/Probe_panel_hg19.bed' # The bed file for the target regions.
 ls *bam | sed 's/.bam//'|while read name;do
 		samtools view -F 268 -b ${name}'.bam' > ${name}'_mapped.bam'
 		samtools view -b -L ${f_panel} ${name}'_mapped.bam'  > ${name}'_mapped_onTarget.bam'

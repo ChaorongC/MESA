@@ -1,5 +1,5 @@
 ### Author: Yumei Li
-### Time: 06/27/2022
+### Time: 07/21/2022
 
 library(ggplot2)
 library(factoextra)
@@ -229,7 +229,8 @@ plotProb("Manuscript/Cohort2_combine_probability_20220517.csv", "Manuscript/figu
 ########## Fig. 6 ##########
 myColors=c("red", "purple", "#317EC2", "#E7872B")
 myModels=c("Multimodal", "Methylation", "Occupancy", "Fragmentation")
-df <- read.csv(file="cfTAPS/cfTAPS_NvsC_combine_probability_20220605.csv", header = T, check.names = F)
+### Ctrl vs. HCC
+df <- read.csv(file="cfTAPS/cfTAPS_NvsH_combine_probability_20220605.csv", header = T, check.names = F)
 singles <- c("methylation_PE","occupancy_fl500_meanF", "fragment_frac300-500")
 aucs=c()
 pred <- prediction(df$`methylation_PE+occupancy_fl500_meanF+fragment_frac300`, df$label)
@@ -246,7 +247,25 @@ df_roc$type=factor(df_roc$type, levels = myModels)
 p1 <- ggplot(df_roc, aes(x=FalsePositive, y=TruePositive, color=type)) + geom_line(lwd=0.5) + labs(x="False positive rate", y="True positive rate") +
   scale_color_manual(values=myColors, name = "AUC", labels = paste0(aucs, " (", myModels, ")")) +
   theme(aspect.ratio=1, legend.position = c(0.7,0.3), legend.key = element_rect(fill=NA), legend.background = element_blank(), legend.title = element_text(size=10))
-
+### Ctrl vs. PDAC
+df <- read.csv(file="cfTAPS/cfTAPS_NvsP_combine_probability_20220605.csv", header = T, check.names = F)
+singles <- c("methylation_PE","occupancy_fl500_meanF", "fragment_frac300-500")
+aucs=c()
+pred <- prediction(df$`methylation_PE+occupancy_fl500_meanF+fragment_frac300`, df$label)
+perf <- performance(pred, "tpr", "fpr")
+aucs[1] <- format(round(performance(pred, measure = "auc")@y.values[[1]], digits = 4), nsmall = 4)
+df_roc <- data.frame(type=rep("Multimodal", length(perf@x.values[[1]])),FalsePositive=perf@x.values[[1]], TruePositive=perf@y.values[[1]])
+for(i in 1:3){
+  pred <- prediction(df[singles[i]], df$label)
+  perf <- performance(pred, "tpr", "fpr")
+  aucs[i+1] <- round(performance(pred, measure = "auc")@y.values[[1]], digits = 4)
+  df_roc <- rbind(df_roc,data.frame(type=rep(myModels[i+1], length(perf@x.values[[1]])),FalsePositive=perf@x.values[[1]], TruePositive=perf@y.values[[1]]))
+}
+df_roc$type=factor(df_roc$type, levels = myModels)
+p2 <- ggplot(df_roc, aes(x=FalsePositive, y=TruePositive, color=type)) + geom_line(lwd=0.5) + labs(x="False positive rate", y="True positive rate") +
+  scale_color_manual(values=myColors, name = "AUC", labels = paste0(aucs, " (", myModels, ")")) +
+  theme(aspect.ratio=1, legend.position = c(0.7,0.3), legend.key = element_rect(fill=NA), legend.background = element_blank(), legend.title = element_text(size=10))
+### 3-class
 df <- read.csv(file="cfTAPS/cfTAPS_3class_combine_probability_20220605.csv", header = T, check.names = F)
 accuracies = c()
 accuracies[1]=nrow(df[df$`methylation_PE+occupancy_fl500_meanF+fragment_frac300`==df$label,])/nrow(df)
@@ -255,8 +274,8 @@ for(i in 1:3){
 }
 data <- data.frame(model=myModels, accuracy=accuracies)
 data$model=factor(data$model, levels = myModels)
-p2 <- ggplot(data, aes(x=model, y=accuracy)) + geom_bar(stat="identity",width = 0.8, color=myColors, fill=NA) + ylim(0,0.8) + labs(x="", y="Accuracy")+
+p3 <- ggplot(data, aes(x=model, y=accuracy)) + geom_bar(stat="identity",width = 0.8, color=myColors, fill=NA) + ylim(0,0.8) + labs(x="", y="Accuracy")+
   geom_text(aes(label = round(accuracy,digits = 4)), vjust=-0.3) + theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
-pdf(file="Manuscript/figures/Fig. 6-CD.pdf", width = 9, height = 3)
-ggarrange(p1, p2, ncol=1, nrow=2, labels = c("C", "D"))
+pdf(file="Manuscript/figures/Fig. 6-CDE.pdf", width = 9, height = 3)
+ggarrange(p1, p2, p3, ncol=1, nrow=2, labels = c("C", "D", "E"))
 dev.off()

@@ -1,9 +1,10 @@
 #!/bin/bash
 
 ### Author: Yumei Li
-### Date: 06/27/2022
-### Softwares needed: TrimGalore, BWA, Samtools, Deeptools, DANPOS2, UCSCtools, Bedtools, bwtool
+### Date: 07/21/2022
+### Softwares needed: TrimGalore, BWA, MethylDackel, Samtools, Deeptools, DANPOS2, UCSCtools, Bedtools, bwtool
 
+# Reference human genome (hg19)
 refFa=/dfs5/weil21-lab/yumeil1/data/fa/hg19/hg19full.fa
 
 #1. Pre-mapping quality control and read mapping
