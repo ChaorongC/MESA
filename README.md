@@ -1,6 +1,7 @@
 # MESA
 
 <ins>M</ins>ultimodal <ins>E</ins>pigenetic <ins>S</ins>equencing <ins>A</ins>nalysis (MESA) is a flexible and sensitive method of capturing and integrating multimodal epigenetic information of cfDNA using a single experimental assay.
+
 For reproducing the major results of the original MESA paper, please refer to this tutorial: https://rpubs.com/LiYumei/926228.
 
 ## Dependencies
