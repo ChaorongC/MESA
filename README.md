@@ -54,17 +54,19 @@ MESA_single(X,
         boruta_top_n_feature=1000)
 ```
 __X__ : dataframe of shape (n_features, n_samples)
-  > Input samples.
-  > A matrix containing samples as rows with features as columns.
+  >Input samples.
+  >A matrix containing features as rows with samples as columns.
    
 __y__ : array-like of shape (n_samples,)
-  >Target values/labels/stages.
+  >Target values/labels/stages. Usually, we use 0 and 1 for 'normal/negative' and 'cancer/positive' samples.
 
 __estimator__ : estimator object/model implementing ‘fit’
   >The object used to fit the data.
+  >A model that is used to evaluate feature subsets in each iteration of sequential backward selection.
     
 __classifiers__ : a list of estimator object/model implementing ‘fit’ and 'predict_proba'
   >The object to use to evalutate on test set at the end.
+  >A model used to train on the final selected feature subset then test on the testing set.
 
 __cv__ : int, cross-validation generator or an iterable, default=5
   >(Adopted from `sklearn.model_selection.cross_val_score`) Determines the cross-validation splitting strategy. Possible inputs for cv are: 
@@ -74,7 +76,7 @@ __random_state__ : int, RandomState instance or None, default=0
   >Controls the pseudo random number generation for shuffling the data.
   
 __min_feature : int, default=10
-  >The minimal feature size SBS should consider
+  >The minimal feature size SBS should consider.
   
 __n_jobs__ : int, default=-1
   >Number of jobs to run in parallel. When evaluating a new feature to add or remove, the cross-validation procedure is parallel over the folds. None means 1 unless in a joblib.parallel_backend context. -1 means using all processors.  
@@ -83,7 +85,8 @@ __scoring__ : str or callable, default='roc_auc'
   >For SBS process, a str (see scikit-learn model evaluation documentation) or a scorer callable object/function with signature scorer(estimator, X, y) which should return only a single value. Compatible with `sklearn.model_selection.cross_val_score`.    
     
 __boruta_top_n_feature__ : int, default=1000
-  >Features to select for SBS in the Boruta algorithm. 
+  >Features to select for SBS in the Boruta algorithm.
+  >Features are first ranked by Boruta then output for SBS for further selection.
     
 ```shell
 MESA_integration(X_list, 
@@ -93,9 +96,10 @@ MESA_integration(X_list,
 ```
 __X__ : list of dataframes of shape (n_features, n_samples)
   >Input samples.
+  >A matrix containing features as rows with samples as columns.
   
 __y__ : array-like of shape (n_samples,)
-  >Target values/labels.
+  >Target values/labels/stages. Usually, we use 0 and 1 for 'normal/negative' and 'cancer/positive' samples.
   
 __feature_selected__ :  list of tuples (n_samples) 
   >Features selected for each LOO iteration (same order with X)
