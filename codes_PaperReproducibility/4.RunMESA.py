@@ -2,7 +2,7 @@
  # @ Author: Chaorong Chen
  # @ Create Time: 2022-07-14 21:12:52
  # @ Modified by: Chaorong Chen
- # @ Modified time: 2022-07-19 21:47:00
+ # @ Modified time: 2023-02-11 00:21:15
  # @ Description: reproductivity-MESA
  """
 
@@ -10,27 +10,10 @@ from matplotlib.pyplot import cla
 import pandas as pd
 import numpy as np
 import glob
-from MESA import *
+from MESA_util import *
 
 
 random_state = 0
-rf = RandomForestClassifier(random_state=random_state, n_jobs=-1)
-lr = LogisticRegression(
-    multi_class="ovr", solver="liblinear", random_state=random_state, n_jobs=-1
-)
-df = CascadeForestClassifier(n_jobs=-1, random_state=0, use_predictor=True)
-ensembling_clf = VotingClassifier(
-    estimators=[
-        ("lr", lr),
-        ("rf", rf),
-        ("df", CascadeForestClassifier(n_jobs=-1, random_state=0, use_predictor=True)),
-    ],
-    voting="soft",
-)
-
-svc = SVC(kernel="linear", random_state=0, probability=True)
-cv_sbs = StratifiedKFold(n_splits=5, random_state=random_state, shuffle=True)
-
 
 def readNconcat(dir, featureType):
     cancer_data = pd.read_table(
@@ -64,6 +47,7 @@ c1_methylation_result = MESA_single(
     classifiers=[ensembling_clf],
     min_feature=2,
 )
+
 c1_fragmentation_result = MESA_single(
     X=c1_fragmentation[0],
     y=c1_fragmentation[1],
