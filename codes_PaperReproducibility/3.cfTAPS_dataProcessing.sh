@@ -1,7 +1,7 @@
 #!/bin/bash
 
 ### Author: Yumei Li
-### Date: 07/21/2022
+### Date: 12/03/2023
 ### Softwares needed: TrimGalore, BWA, MethylDackel, Samtools, Deeptools, DANPOS2, UCSCtools, Bedtools, bwtool
 
 # Reference human genome (hg19)
@@ -132,40 +132,36 @@ echo -e 'library(dplyr)
 	write.table(df_mean[,grepl("PDAC",colnames(df_mean))],file="PDAC.allRefGene.TSS-PAS.fl500.occupancy.meanF.tsv", quote=F, row.names=T, col.names=T, sep="\t")
 	'|Rscript -
 
-#7. Fragmentation features
-ls 1.bam/*.merged.sorted.bam|while read file;do
-    sample=$(echo $file|sed 's/.merged.sorted.bam//');
-    samtools stats -@ 20 $file > ${file}Stats
-    samtools stats -@ 20 ${sample}_merged_filtered.sorted.bam > ${sample}_merged_filtered.sorted.bamStats
+#7. WPS features
+### Select regions to calculate
+awk -v OFS="\t" '{print $1,$2-500,$3+500}' all.hg19.refGene.TSS-PAS.fl1kb.bed6|sort -k1,1 -k2,2n |bedtools merge -i stdin >test.merge.bed
+cut -f1 test.merge.bed|sort -u|while read chr;do
+    awk -v value=$chr '$1==value' test.merge.bed >test.merge.${chr}.bed
 done
-ls 1.bam/*merged_filtered.sorted.bamStats|while read file;do  sample=$(basename $file|cut -f1-2 -d '_'); grep "^IS" $file | cut -f2- |awk '$3>0{print $1+20"\t"$3}' >features/frag_300-500/${sample}.bamStats.IS.tsv ; done;
-ls 1.bam/*merged_filtered.sorted.bamStats|while read file;do  sample=$(basename $file|cut -f1-2 -d '_'); grep "^IS" $file | cut -f2- |awk '{print $1+20"\t"$2}' >features/frag_300-500/${sample}.bamStats.IS.all.tsv ; done;
-ls features/frag_300-500/*.bamStats.IS.tsv|while read file;do
-    sample=$(echo $file|sed 's/.bamStats.IS.tsv//');
-    total=$(awk 'BEGIN{sum=0}{sum+=$2}END{print sum}' $file)
-    for((i=300;i<500;i+=10))
+ls 1.bam/*_filtered_80_200.sorted.bam|while read file;do
+    prefix=$(echo $file|sed 's/_filtered_80_200.sorted.bam//')
+    samtools sort -@ 40 -n -o test.nsorted.bam $file
+    bedtools bamtobed -bedpe -mate1 -i test.nsorted.bam >${prefix}.mate1First.bedpe
+    awk -v OFS="\t" '$1!="Lambda_NEB" && $1!="pUC19"{($2<$5)?start=$2:start=$5; ($3>$6)?end=$3:end=$6; print $1,start,end,$7}' ${prefix}.mate1First.bedpe >${prefix}.frag.bed4
+    bedtools intersect -wa -a ${prefix}.frag.bed4 -b test.merge.bed >${prefix}.test.bed
+    sort -u ${prefix}.test.bed >${prefix}.frag.TSS-PAS.fl1.5kb.bed4
+    rm ${prefix}.test.bed
+    sort-bed ${prefix}.frag.TSS-PAS.fl1.5kb.bed4 >${prefix}.frag.TSS-PAS.fl1.5kb.sorted.bed4
+    cat /dfs5/weil21-lab/yumeil1/data/chr.size/hg19.noRandom.chr.size|while read chr size;do
+         bedextract $chr ${prefix}.frag.TSS-PAS.fl1.5kb.sorted.bed4 >${prefix}.${chr}.bed4
+        python /dfs5/weil21-lab/yumeil1/projects/ideaTest/cfDNA-PA/scripts/WPS_region.py -b ${prefix}.${chr}.bed4 -r test.merge.${chr}.bed -o ${prefix}.${chr}.WPS.bg
+    done
+    cat ${prefix}*chr*WPS.bg | grep -v "track" | sort -k1,1 -k2,2n >${prefix}.WPS.bg
+    totalFrag=$(wc -l ${prefix}.frag.bed4|awk '{print $1}')
+    factor=$(echo "scale=6; 1000000 / $totalFrag"|bc);
+    awk -v value=$factor -v OFS="\t" '{print $1,$2,$3,$4*value}' ${prefix}.WPS.bg >${prefix}.WPS.norm.bg
+    bedGraphToBigWig ${prefix}.WPS.norm.bg /dfs5/weil21-lab/yumeil1/data/chr.size/hg19.noRandom.chr.size ${prefix}.WPS.norm.bw
+done
+
+conditions=("Ctrl" "HCC" "PDAC");
+for((i=0;i<=2;i++))
     do
-        range=$(awk -v value=$i '$1>=value && $1<value+20' $file|awk 'BEGIN{sum=0}{sum+=$2}END{print sum}');
-        fraction=$(echo "scale=6;$range/$total"|bc);
-        echo -e "$i\t$fraction" >>${sample}_Frac300-500.tsv
-    done;
-done;
-cut -f1 frag_300-500/Ctrl_10_Frac300-500.tsv >Ctrl.Frac300-500.fragmentation.tsv
-ls frag_300-500/Ctrl_*_Frac300-500.tsv|while read file;do
-    cut -f2 $file|paste Ctrl.Frac300-500.fragmentation.tsv - >tmp
-    mv tmp Ctrl.Frac300-500.fragmentation.tsv
-done;
-cat ../Ctrl.header Ctrl.Frac300-500.fragmentation.tsv >tmp;mv tmp Ctrl.Frac300-500.fragmentation.tsv
-cut -f1 frag_300-500/HCC_10_Frac300-500.tsv >HCC.Frac300-500.fragmentation.tsv
-ls frag_300-500/HCC_*_Frac300-500.tsv|while read file;do
-    cut -f2 $file|paste HCC.Frac300-500.fragmentation.tsv - >tmp
-    mv tmp HCC.Frac300-500.fragmentation.tsv
-done;
-cat ../HCC.header HCC.Frac300-500.fragmentation.tsv >tmp;mv tmp HCC.Frac300-500.fragmentation.tsv
-cut -f1 frag_300-500/PDAC_10_Frac300-500.tsv >PDAC.Frac300-500.fragmentation.tsv
-ls frag_300-500/PDAC_*_Frac300-500.tsv|while read file;do
-    cut -f2 $file|paste PDAC.Frac300-500.fragmentation.tsv - >tmp
-    mv tmp PDAC.Frac300-500.fragmentation.tsv
-done;
-cat ../PDAC.header PDAC.Frac300-500.fragmentation.tsv >tmp;mv tmp PDAC.Frac300-500.fragmentation.tsv
-	
+        tmpList=$(ls 1.bam/*/${conditions[i]}*WPS.norm.bw|awk -v ORS="," '{print $0}'|sed 's/,$//');
+        sh /dfs5/weil21-lab/yumeil1/scripts/bwMeanForMultiFiles.sh -r all.hg19.refGene.TSS-PAS.fl500.bed6 -b $tmpList -p bigWigAverageOverBed -o features/${conditions[i]}.allRefGene.TSS-PAS.fl500.WPS.tsv
+        cut -f4,7- features/${conditions[i]}.allRefGene.TSS-PAS.fl500.WPS.tsv|sort -k1,1 >tmp; cat ${conditions[i]}.header tmp >features/${conditions[i]}.allRefGene.TSS-PAS.fl500.WPS.tsv
+    done

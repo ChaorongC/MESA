@@ -1,5 +1,5 @@
 ### Author: Yumei Li
-### Time: 07/21/2022
+### Time: 12/03/2023
 
 library(ggplot2)
 library(factoextra)
@@ -109,173 +109,151 @@ legend("topright", legend = c("DANPOS","Raw coverage"), lty=1, col=c("red", "blu
 dev.off()
 
 ########## Fig. 4 ########## 
-plotAUC <- function(singleFile, combineFile){
-  dataS <- read.csv(file=singleFile, header = T, check.names = F)
-  dataC <- read.csv(file=combineFile, header = T, check.names = F)
+plotFig4ROC <- function(data){
   aucs = c()
-  pred_T <- prediction(dataS$`Occupancy TSS`, dataS$label)
+  pred_T <- prediction(data$`Occupancy_TSS`, data$Label)
   perf_T <- performance(pred_T, "tpr", "fpr")
   aucs[1] <- round(performance(pred_T, measure = "auc")@y.values[[1]], digits = 4)
   
-  pred_P <- prediction(dataS$`Occuapncy PAS`, dataS$label)
+  pred_P <- prediction(data$`Occupancy_PAS`, data$Label)
   perf_P <- performance(pred_P, "tpr", "fpr")
   aucs[2] <- round(performance(pred_P, measure = "auc")@y.values[[1]], digits = 4)
   
-  pred_occ <- prediction(dataC$`Occupancy_PAS+TSS`, dataC$label)
+  pred_occ <- prediction(data$`Occupancy_PAS+TSS`, data$Label)
   perf_occ <- performance(pred_occ, "tpr", "fpr")
   aucs[3] <- round(performance(pred_occ, measure = "auc")@y.values[[1]], digits = 4)
   
-  pred_fuz <- prediction(dataC$`Fuzziness_PAS+TSS`, dataC$label)
-  perf_fuz <- performance(pred_fuz, "tpr", "fpr")
-  aucs[4] <- round(performance(pred_fuz, measure = "auc")@y.values[[1]], digits = 4)
+  pred_fuzT <- prediction(data$`Fuzziness_TSS`, data$Label)
+  perf_fuzT <- performance(pred_fuzT, "tpr", "fpr")
+  aucs[4] <- round(performance(pred_fuzT, measure = "auc")@y.values[[1]], digits = 4)
   
-  pred_all <- prediction(dataC$`Occupancy+Fuzziness_PAS+TSS`, dataC$label)
-  perf_all <- performance(pred_all, "tpr", "fpr")
-  aucs[5] <- round(performance(pred_all, measure = "auc")@y.values[[1]], digits = 4)
-  format(aucs, nsmall = 4)
+  
+  pred_fuzP <- prediction(data$`Fuzziness_PAS`, data$Label)
+  perf_fuzP <- performance(pred_fuzP, "tpr", "fpr")
+  aucs[5] <- round(performance(pred_fuzP, measure = "auc")@y.values[[1]], digits = 4)
+  
+  pred_fuz <- prediction(data$`Fuzziness_PAS+TSS`, data$Label)
+  perf_fuz <- performance(pred_fuz, "tpr", "fpr")
+  aucs[6] <- round(performance(pred_fuz, measure = "auc")@y.values[[1]], digits = 4)
   
   df1 <- data.frame(type=as.factor(c(rep("TSS",length(perf_T@x.values[[1]])),rep("PAS",length(perf_P@x.values[[1]])),rep("Cmb",length(perf_occ@x.values[[1]])))),
                     FalsePositive=c(perf_T@x.values[[1]], perf_P@x.values[[1]], perf_occ@x.values[[1]]), 
                     TruePositive=c(perf_T@y.values[[1]], perf_P@y.values[[1]], perf_occ@y.values[[1]]))
-  p1 <- ggplot(df1, aes(x=FalsePositive, y=TruePositive, color=type)) + geom_line(lwd=1, alpha=0.6) + labs(x="FPR", y="TPR") +
+  p1 <- ggplot(df1, aes(x=FalsePositive, y=TruePositive, color=type)) + geom_line(lwd=0.5) + labs(x="False positive rate", y="True positive rate") +
     scale_color_manual(values=c("red","green","blue"),name = "AUC", labels = paste0(c("Cmb (", "PAS (", "TSS ("), aucs[3:1], ")")) +
     theme(aspect.ratio=1, legend.position = c(0.7,0.2), legend.key = element_rect(fill=NA))
-  df2 <- data.frame(type=as.factor(c(rep("Occupancy",length(perf_occ@x.values[[1]])),rep("Fuzziness",length(perf_fuz@x.values[[1]])),rep("Cmb",length(perf_all@x.values[[1]])))),
-                    FalsePositive=c(perf_occ@x.values[[1]], perf_fuz@x.values[[1]], perf_all@x.values[[1]]), 
-                    TruePositive=c(perf_occ@y.values[[1]], perf_fuz@y.values[[1]], perf_all@y.values[[1]]))
-  p2 <- ggplot(df2, aes(x=FalsePositive, y=TruePositive, color=type)) + geom_line(lwd=1, alpha=0.6) + labs(x="FPR", y="TPR") +
-    scale_color_manual(values=c("black","purple","red"), name = "AUC", labels = paste0(c("Cmb (", "Fuzziness (", "Occupancy ("), aucs[5:3], ")")) +
+  df2 <- data.frame(type=as.factor(c(rep("TSS",length(perf_fuzT@x.values[[1]])),rep("PAS",length(perf_fuzP@x.values[[1]])),rep("Cmb",length(perf_fuz@x.values[[1]])))),
+                    FalsePositive=c(perf_fuzT@x.values[[1]], perf_fuzP@x.values[[1]], perf_fuz@x.values[[1]]), 
+                    TruePositive=c(perf_fuzT@y.values[[1]], perf_fuzP@y.values[[1]], perf_fuz@y.values[[1]]))
+  p2 <- ggplot(df2, aes(x=FalsePositive, y=TruePositive, color=type)) + geom_line(lwd=0.5) + labs(x="False positive rate", y="True positive rate") +
+    scale_color_manual(values=c("black","purple","#E7872B"), name = "AUC", labels = paste0(c("Cmb (", "PAS (", "TSS ("), aucs[6:4], ")")) +
     theme(aspect.ratio=1, legend.position = c(0.7,0.2), legend.key = element_rect(fill=NA))
-    return(list(p1,p2))
+  return(list(p1,p2))
 }
-p1 <- plotAUC("Manuscript/Cohort1_nucleosome_probability_20220504.csv", 
-               "Manuscript/Cohort1_nucleosome_combine_probability_20220504.csv")
-p2 <- plotAUC("Manuscript/Cohort2_nucleosome_probability_20220516.csv",
-               "Manuscript/Cohort2_combine_probability_20220516.csv")
-pdf(file="Manuscript/figures/Fig. 4.pdf", width = 6.5, height = 6.5)
-ggarrange(p1[[1]], p1[[2]], p2[[1]], p2[[2]], ncol=2, nrow=2, labels = c("C", "D", "E", "F"))
+data <- as.data.frame(read_excel(path="finalModelRst/20230117_result_v1.1.xlsx", sheet = "US1_proba"))
+plots_1 <- plotFig4ROC(data)
+data <- as.data.frame(read_excel(path="finalModelRst/20230117_result_v1.1.xlsx", sheet = "CN_proba"))
+plots_2 <- plotFig4ROC(data)
+pdf(file="newFigures and tables/Fig. 4C-F.pdf", width = 6.5, height = 6.5)
+ggarrange(plots_1[[1]], plots_2[[1]], plots_1[[2]], plots_2[[2]], nrow = 2, ncol = 2, 
+          labels = c("C", "D", "E", "F"), font.label = list(size = 10, color = "black", face = "bold"))
 dev.off()
 
-
 ########## Fig. 5 ##########
-myColors=c("#C03830", "#825CA6", "#317EC2", "#5AAA46", "#E7872B")
-myModels=c("Multimodal", "Methylation", "Occupancy", "Fuzziness", "Fragmentation")
-plotROCsFig5 <- function(probFile, stageFile, stageAUCs){
-  df <- read.csv(file=probFile, header = T, check.names = F)
-  singles <- c("Methylation","Occupancy_PAS+TSS", "Fuzziness_PAS+TSS", "Fragment(merged)")
+plotROCwtWPS <- function(probData){
+  data <- as.data.frame(probData)
   aucs=c()
-  pred <- prediction(df$`methylation+occupancy+fuzziness_PASTSS+fragment(merged)`, df$label)
-  perf <- performance(pred, "tpr", "fpr")
-  aucs[1] <- format(round(performance(pred, measure = "auc")@y.values[[1]], digits = 4), nsmall = 4)
-  df_roc <- data.frame(type=rep("Multimodal", length(perf@x.values[[1]])),FalsePositive=perf@x.values[[1]], TruePositive=perf@y.values[[1]])
-  for(i in 1:4){
-    pred <- prediction(df[singles[i]], df$label)
+  df_roc=data.frame()
+  for(i in 1:5){
+    pred <- prediction(data[,i+2], data$Label)
     perf <- performance(pred, "tpr", "fpr")
-    aucs[i+1] <- round(performance(pred, measure = "auc")@y.values[[1]], digits = 4)
-    df_roc <- rbind(df_roc,data.frame(type=rep(myModels[i+1], length(perf@x.values[[1]])),FalsePositive=perf@x.values[[1]], TruePositive=perf@y.values[[1]]))
+    aucs[i] <- round(performance(pred, measure = "auc")@y.values[[1]], digits = 4)
+    df_roc <- rbind(df_roc,data.frame(type=rep(myModels[i], length(perf@x.values[[1]])),FalsePositive=perf@x.values[[1]], TruePositive=perf@y.values[[1]]))
   }
   df_roc$type=factor(df_roc$type, levels = myModels)
-  p1 <- ggplot(df_roc, aes(x=FalsePositive, y=TruePositive, color=type)) + geom_line(lwd=0.5) + labs(x="FPR", y="TPR") +
+  p1 <- ggplot(df_roc, aes(x=FalsePositive, y=TruePositive, color=type)) + geom_line(lwd=0.5) + 
+    labs(x="False positive rate", y="True positive rate") +
     scale_color_manual(values=myColors, name = "AUC", labels = paste0(aucs, " (", myModels, ")")) +
     theme(aspect.ratio=1, legend.position = c(0.7,0.3), legend.key = element_rect(fill=NA), legend.background = element_blank(), legend.title = element_text(size=10))
-  
-  stageinfor <- na.omit(read.delim(file=stageFile, header = F, check.names = F))
-  df <- merge(df, stageinfor, by=1)
-  aucs <- matrix(nrow=4, ncol=5)
-  for(i in 1:4){
-    pred <- prediction(df[df$V3==0 | df$V3==i,]$`methylation+occupancy+fuzziness_PASTSS+fragment(merged)`, df[df$V3==0 | df$V3==i,]$label)
-    perf <- performance(pred, "tpr", "fpr")
-    aucs[i,1] = round(performance(pred, measure = "auc")@y.values[[1]], digits = 4)
-    for(j in 1:4){
-      pred <- prediction(df[df$V3==0 | df$V3==i,singles[j]], df[df$V3==0 | df$V3==i,]$label)
-      perf <- performance(pred, "tpr", "fpr")
-      #aucs[i,j+1] = format(round(performance(pred, measure = "auc")@y.values[[1]], digits = 4), nsmall = 4)
-      aucs[i,j+1] = round(performance(pred, measure = "auc")@y.values[[1]], digits = 4)
-    }
-  }
-  colnames(aucs)=myModels
-  rownames(aucs)=c("I","II","III","IV")
-  aucs=melt(aucs)
-  aucs$Var1=factor(aucs$Var1, levels = c("I", "II", "III", "IV")) 
-  aucs$Var2=factor(aucs$Var2, levels = myModels)
-  return(list(p1,aucs))  
+  return(p1)  
 }
-plotProb <- function(probFile, outFile1, outFile2){
-  df <- read.csv(file=probFile, header = T, check.names = F)
-  df <- df[c("label", "Methylation","Occupancy_PAS+TSS", "Fuzziness_PAS+TSS", "Fragment(merged)")]
-  colnames(df)=c("label", "Methylation", "Occupancy", "Fuzziness", "Fragmentation")
+myColors=c("purple", "#317EC2", "#5AAA46", "#E7872B","red")
+myModels=c("Methylation", "Occupancy", "Fuzziness", "WPS","Multimodal")
+data=as.data.frame(read_xlsx(path = "finalModelRst/20230117_result_fromChaorong_v1.1.xlsx", sheet = "US1_proba"))
+data=data[,c(1:3,10,11,8,9)]
+p1=plotROCwtWPS(data)
+data=as.data.frame(read_xlsx(path = "finalModelRst/20230117_result_fromChaorong_v1.1.xlsx", sheet = "CN_proba"))
+data=data[,c(1:3,10,11,8,9)]
+p2=plotROCwtWPS(data)
+data=as.data.frame(read_xlsx(path = "finalModelRst/20230117_result_fromChaorong_v1.1.xlsx", sheet = "CrossCohort_TrainOnUS2.1_proba"))
+p3=plotROCwtWPS(data)
+pdf(file="newFigures and tables/Fig5A-C.pdf", width = 6.5, height = 3.5)
+ggarrange(p1, p2, p3, ncol=3, nrow=1, labels = c("A", "B", "C"))
+dev.off()
+
+plotProb <- function(df, outFile1, outFile2){
+  colnames(df)=c("label", "Methylation", "Occupancy", "Fuzziness", "WPS")
   correlations <- cor(df[,-1], method = "spearman")
   df_p <- t(df[,-1])
   colnames(df_p)=c(1:ncol(df_p))
   df$label[df$label==1]="Cancer"
   df$label[df$label==0]="NonCancer"
-  pheatmap(df_p, cluster_cols = F, cluster_rows = F, show_colnames = F, show_rownames = T, breaks = seq(0,1,length.out = 101), legend_labels = seq(0,1,0.2),
+  pheatmap(df_p, cluster_cols = F, cluster_rows = F, show_colnames = F, show_rownames = T, 
+           breaks = seq(0,1,length.out = 101), legend_labels = seq(0,1,0.2), border_color = NA,
            color = colorRampPalette(c("navy", "white", "red"), space="Lab")(100), filename = outFile1,
            annotation_col = data.frame(conditions=as.factor(df$label)), annotation_colors = list(conditions=c(NonCancer="gray", Cancer="darkred")))
   pdf(file=outFile2, width = 3.25, height = 3.25)
-  corrplot(correlations, method = "color", type="lower", addCoef.col="firebrick3", tl.col="black", is.corr = F, addgrid.col="gray", 
+  corrplot(correlations, method = "color", type="lower", addCoef.col="yellow", tl.col="black", is.corr = F, addgrid.col="gray", 
            cl.lim = c(0,1.0), cl.length = 5) 
   dev.off()
 }
-p1 <- plotROCsFig5("Manuscript/Cohort1_combine_probability_20220510.csv", "colonCancer/Cohort1_Colon_sampleID_stageInfor.tsv", USstageAUC)
-p2 <- plotROCsFig5("Manuscript/Cohort2_combine_probability_20220517.csv", "colonCancer/Cohort2_Colon_sampleID_stageInfor.tsv", CNstageAUC)
-pdf(file="Manuscript/figures/Fig. 5AB.pdf")
-ggarrange(p1[[1]], p2[[1]], ncol=2, nrow=1)
-dev.off()
-write.table(rbind(dcast(p1[[2]], Var1~Var2), dcast(p2[[2]], Var1~Var2)), file = "Manuscript/figures/Fig. 5CD.tsv", sep="\t", quote = F, row.names = F, col.names = T)
-plotProb("Manuscript/Cohort1_combine_probability_20220510.csv", "Manuscript/figures/Fig. 5E.pdf", "Manuscript/figures/v6/Fig. 5G.pdf")
-plotProb("Manuscript/Cohort2_combine_probability_20220517.csv", "Manuscript/figures/Fig. 5F.pdf", "Manuscript/figures/v6/Fig. 5H.pdf")
+data=as.data.frame(read_xlsx(path = "finalModelRst/20230117_result_fromChaorong_v1.1.xlsx", sheet = "US1_proba"))
+data=data[,c(2,3,10,11,8)]
+plotProb(data,"newFigures and tables/Fig5-US1hp.pdf", "newFigures and tables/Fig5-US1cor.pdf")
+
+data=as.data.frame(read_xlsx(path = "finalModelRst/20230117_result_fromChaorong_v1.1.xlsx", sheet = "CN_proba"))
+data=data[,c(2,3,10,11,8)]
+plotProb(data,"newFigures and tables/Fig5-CNhp.pdf", "newFigures and tables/Fig5-CNcor.pdf")
+
+data=as.data.frame(read_xlsx(path = "finalModelRst/20230117_result_fromChaorong_v1.1.xlsx", sheet = "CrossCohort_TrainOnUS2.1_proba"))
+data=data[,-c(1,7)]
+plotProb(data,"newFigures and tables/Fig5-US2hp.pdf", "newFigures and tables/Fig5-US2cor.pdf")
 
 ########## Fig. 6 ##########
 myColors=c("red", "purple", "#317EC2", "#E7872B")
-myModels=c("Multimodal", "Methylation", "Occupancy", "Fragmentation")
-### Ctrl vs. HCC
-df <- read.csv(file="cfTAPS/cfTAPS_NvsH_combine_probability_20220605.csv", header = T, check.names = F)
-singles <- c("methylation_PE","occupancy_fl500_meanF", "fragment_frac300-500")
-aucs=c()
-pred <- prediction(df$`methylation_PE+occupancy_fl500_meanF+fragment_frac300`, df$label)
-perf <- performance(pred, "tpr", "fpr")
-aucs[1] <- format(round(performance(pred, measure = "auc")@y.values[[1]], digits = 4), nsmall = 4)
-df_roc <- data.frame(type=rep("Multimodal", length(perf@x.values[[1]])),FalsePositive=perf@x.values[[1]], TruePositive=perf@y.values[[1]])
-for(i in 1:3){
-  pred <- prediction(df[singles[i]], df$label)
-  perf <- performance(pred, "tpr", "fpr")
-  aucs[i+1] <- round(performance(pred, measure = "auc")@y.values[[1]], digits = 4)
-  df_roc <- rbind(df_roc,data.frame(type=rep(myModels[i+1], length(perf@x.values[[1]])),FalsePositive=perf@x.values[[1]], TruePositive=perf@y.values[[1]]))
+myModels=c("Multimodal", "Methylation", "Occupancy", "WPS")
+plotROCFig6 <- function(data){
+  aucs=c()
+  df_roc <- data.frame()
+  for(i in 1:4){
+    pred <- prediction(data[,i+2], data$Label)
+    perf <- performance(pred, "tpr", "fpr")
+    aucs[i] <- round(performance(pred, measure = "auc")@y.values[[1]], digits = 4)
+    df_roc <- rbind(df_roc,data.frame(type=rep(myModels[i], length(perf@x.values[[1]])),FalsePositive=perf@x.values[[1]], TruePositive=perf@y.values[[1]]))
+  }
+  df_roc$type=factor(df_roc$type, levels = myModels)
+  p <- ggplot(df_roc, aes(x=FalsePositive, y=TruePositive, color=type)) + geom_line(lwd=0.5) + labs(x="False positive rate", y="True positive rate") +
+    scale_color_manual(values=myColors, name = "AUC", labels = paste0(aucs, " (", myModels, ")")) +
+    theme(aspect.ratio=1, legend.position = c(0.7,0.3), legend.key = element_rect(fill=NA), legend.background = element_blank(), legend.title = element_text(size=10))
+  return(p)
 }
-df_roc$type=factor(df_roc$type, levels = myModels)
-p1 <- ggplot(df_roc, aes(x=FalsePositive, y=TruePositive, color=type)) + geom_line(lwd=0.5) + labs(x="False positive rate", y="True positive rate") +
-  scale_color_manual(values=myColors, name = "AUC", labels = paste0(aucs, " (", myModels, ")")) +
-  theme(aspect.ratio=1, legend.position = c(0.7,0.3), legend.key = element_rect(fill=NA), legend.background = element_blank(), legend.title = element_text(size=10))
-### Ctrl vs. PDAC
-df <- read.csv(file="cfTAPS/cfTAPS_NvsP_combine_probability_20220605.csv", header = T, check.names = F)
-singles <- c("methylation_PE","occupancy_fl500_meanF", "fragment_frac300-500")
-aucs=c()
-pred <- prediction(df$`methylation_PE+occupancy_fl500_meanF+fragment_frac300`, df$label)
-perf <- performance(pred, "tpr", "fpr")
-aucs[1] <- format(round(performance(pred, measure = "auc")@y.values[[1]], digits = 4), nsmall = 4)
-df_roc <- data.frame(type=rep("Multimodal", length(perf@x.values[[1]])),FalsePositive=perf@x.values[[1]], TruePositive=perf@y.values[[1]])
-for(i in 1:3){
-  pred <- prediction(df[singles[i]], df$label)
-  perf <- performance(pred, "tpr", "fpr")
-  aucs[i+1] <- round(performance(pred, measure = "auc")@y.values[[1]], digits = 4)
-  df_roc <- rbind(df_roc,data.frame(type=rep(myModels[i+1], length(perf@x.values[[1]])),FalsePositive=perf@x.values[[1]], TruePositive=perf@y.values[[1]]))
-}
-df_roc$type=factor(df_roc$type, levels = myModels)
-p2 <- ggplot(df_roc, aes(x=FalsePositive, y=TruePositive, color=type)) + geom_line(lwd=0.5) + labs(x="False positive rate", y="True positive rate") +
-  scale_color_manual(values=myColors, name = "AUC", labels = paste0(aucs, " (", myModels, ")")) +
-  theme(aspect.ratio=1, legend.position = c(0.7,0.3), legend.key = element_rect(fill=NA), legend.background = element_blank(), legend.title = element_text(size=10))
-### 3-class
-df <- read.csv(file="cfTAPS/cfTAPS_3class_combine_probability_20220605.csv", header = T, check.names = F)
+data <- as.data.frame(read_excel(path="finalModelRst/20230131_cfTAPS_corrected.xlsx", sheet = "ctrl-HCC_Proba"))
+data <- data[,c(1,2,8,3,4,6)]
+p1 <- plotROCFig6(data)
+data <- as.data.frame(read_excel(path="finalModelRst/20230131_cfTAPS_corrected.xlsx", sheet = "ctrl-PDAC_Proba"))
+data <- data[,c(1,2,8,3,4,6)]
+p2 <- plotROCFig6(data)
+
+data <- as.data.frame(read_excel(path="finalModelRst/20230201_cfTAPS_3class.xlsx", sheet = "3class_prediction"))
+data <- data[,c(1,2,8,3,4,6)]
 accuracies = c()
-accuracies[1]=nrow(df[df$`methylation_PE+occupancy_fl500_meanF+fragment_frac300`==df$label,])/nrow(df)
-for(i in 1:3){
-  accuracies[i+1] = nrow(df[df[singles[i]] == df$label,])/nrow(df)
+for(i in 1:4){
+  accuracies[i] = nrow(data[data[,i+2] == data$Label,])/nrow(data)
 }
-data <- data.frame(model=myModels, accuracy=accuracies)
-data$model=factor(data$model, levels = myModels)
-p3 <- ggplot(data, aes(x=model, y=accuracy)) + geom_bar(stat="identity",width = 0.8, color=myColors, fill=NA) + ylim(0,0.8) + labs(x="", y="Accuracy")+
+df <- data.frame(model=myModels, accuracy=accuracies)
+df$model=factor(df$model, levels = myModels)
+p3 <- ggplot(df, aes(x=model, y=accuracy)) + geom_bar(stat="identity",width = 0.8, color=myColors, fill=NA) + ylim(0,0.8) + labs(x="", y="Accuracy")+
   geom_text(aes(label = round(accuracy,digits = 4)), vjust=-0.3) + theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
-pdf(file="Manuscript/figures/Fig. 6-CDE.pdf", width = 9, height = 3)
-ggarrange(p1, p2, p3, ncol=1, nrow=2, labels = c("C", "D", "E"))
+pdf(file="newFigures and tables/Fig. 6-CDE.pdf", width = 3, height = 9)
+ggarrange(p1, p2, p3, ncol=1, nrow=3, labels = c("C", "D", "E"))
 dev.off()
