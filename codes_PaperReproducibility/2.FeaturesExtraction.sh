@@ -64,8 +64,8 @@ if [ 1 == 2 ];then
 fi
 mkdir features-WPS 
 ### For Cohort 1, the average value for each nucleosome organization target region.
-bigWigAverageOverBed Rst_danpos2/pooled/${name}.bw targetPanel_Cohort1_nulceosome_TSS_PAS.1kbSlidingWindow.bed6 features-occupancy/${name}.Cohort1.1kbSlidingWindow.ccupancy.tsv
+bigWigAverageOverBed ${name}.WPS.norm.bw $regionFile1 features-WPS/${name}.Cohort1.WPS.tsv
 ### For Cohort 2, the average value for each nucleosome organization target region.
-bigWigAverageOverBed ${name}.WPS.norm.bw $regionFile2 features-occupancy/${name}.Cohort2.WPS.tsv
+bigWigAverageOverBed ${name}.WPS.norm.bw $regionFile2 features-WPS/${name}.Cohort2.WPS.tsv
 ### For Cohort 3, the average value for each nucleosome organization target region.
-bigWigAverageOverBed Rst_danpos2/pooled/${name}.WPS.norm.bw $regionFile3 features-occupancy/${name}.Cohort3.WPS.tsv
+bigWigAverageOverBed ${name}.WPS.norm.bw $regionFile3 features-WPS/${name}.Cohort3.WPS.tsv
