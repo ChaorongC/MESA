@@ -2,7 +2,7 @@
  # @ Author: Chaorong Chen
  # @ Create Time: 2022-06-14 17:00:56
  # @ Modified by: Chaorong Chen
- # @ Modified time: 2023-02-11 02:24:14
+ # @ Modified time: 2023-06-07 19:37:40
  # @ Description: MESA util
  """
 
@@ -21,6 +21,9 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score, roc_auc_score
 from boruta import BorutaPy
 from sklearn.linear_model import LogisticRegression
+from scipy.stats import mannwhitneyu
+from sklearn.feature_selection import GenericUnivariateSelect
+from sklearn.base import clone
 
 # Code for missing value imputation and dataset splitting
 
@@ -137,7 +140,7 @@ def MESA_single(
         boruta_top_n_feature = X.shape[0]
     cv_index = cv_method.split(X.T, y)
     for train_index, test_index in cv_index:
-        print("=============== No.", num, " LOO iteration ===============")
+        print("=============== No.", num, " iteration ===============")
         num += 1
         """
         Train-test spliting & Missing value imputation
@@ -187,6 +190,93 @@ def MESA_single(
     # predicted probability/lable for each sample
     y_pred_all = np.array(y_pred_all)
     return feature_selected_all, y_true, y_pred_all
+
+
+def wilcoxon(X, y):
+    return -mannwhitneyu(X[y == 0],X[y == 1])[1]
+
+
+# Code for MESA single modality construction
+def MESA_single_(
+    X,
+    y,
+    boruta_est=RandomForestClassifier(random_state=0, n_jobs=-1),
+    cv=LeaveOneOut(),
+    classifiers=[RandomForestClassifier(random_state=0, n_jobs=-1)],
+    random_state=0,
+    boruta_top_n_feature=100,
+    variance_threshold=0,
+    selector=None,
+    missing_ratio=0.9,
+    normalization=False,
+    multiclass=False,
+):
+
+    cv_method = cv
+    y_pred_all = []
+    y_true = []
+    feature_selected_all = []
+    num = 1
+    if boruta_top_n_feature > X.shape[0]:
+        boruta_top_n_feature = X.shape[0]
+    cv_index = cv_method.split(X.T, y)
+    def cv_iteration(train_index, test_index):
+        """
+        Train-test spliting & Missing value imputation
+        """
+        X_train, X_test = MESA_preprocessing(
+            X, train_index, test_index, missing_ratio, normalization
+        )
+        X_train, X_test = X_train.values, X_test.values
+        y_train, y_test = np.array(y)[train_index], np.array(y)[test_index]
+    
+        variance = VarianceThreshold().fit(X_train).variances_
+        feature_selected = np.where(variance > variance_threshold)[0]
+        print(
+            "VarianceThreshold(%s): %s/%s features filtered"
+            % (
+                variance_threshold,
+                X_train.shape[1] - len(feature_selected),
+                X_train.shape[1],
+            )
+        )
+        
+        """
+        Selector for feature selection
+        """
+        if selector is not None:
+            feature_selected = feature_selected[clone(selector).fit(X_train[:, feature_selected], y_train).get_support()]
+        print(
+            "Customed selector: %s features selected"
+            %len(feature_selected)
+        )
+        
+        """
+        Boruta algorithm for ranking
+        """
+        boruta_ranking = (
+            BorutaPy(clone(boruta_est), n_estimators="auto", random_state=random_state)
+            .fit(X_train[:, feature_selected], y_train)
+            .ranking_
+        )
+        feature_selected = feature_selected[np.argsort(boruta_ranking)][:boruta_top_n_feature]
+    
+        """
+        Summary for outputA BGVGTYHNM 
+        """
+        y_pred_iter = []
+        for c in classifiers:
+            clf = clone(c)
+            clf.fit(X_train[:, feature_selected], y_train)
+            if multiclass:
+                y_pred = clf.predict(X_test[:, feature_selected])
+            else:
+                y_pred = clf.predict_proba(X_test[:, feature_selected])
+            y_pred_iter.append(y_pred)
+        return  y_test, y_pred_iter,feature_selected
+    return Parallel(n_jobs=-1, verbose=5)(delayed(cv_iteration)(train_index, test_index) for train_index, test_index in cv_index)
+
+
 
 
 def base_prediction(estimator_list, X_list, y, train_index, test_index, random_state=0):
@@ -310,10 +400,10 @@ def MESA_integration(
         )
         # prob.append(meta_est.predict_proba(base_probability_test)[:, 1])
         if multiclass:
-            y_pred_all.append(meta_est.predict(base_probability_test)[0])
+            y_pred_all.append(meta_est.predict(base_probability_test))
         else:
-            y_pred_all.append(meta_est.predict_proba(base_probability_test)[0])
-        y_true.append(y_test[0])
+            y_pred_all.append(meta_est.predict_proba(base_probability_test))
+        y_true.append(y_test)
     return y_true, y_pred_all
 
 
