@@ -2,10 +2,9 @@
  # @ Author: Chaorong Chen
  # @ Create Time: 2022-06-14 17:00:56
  # @ Modified by: Chaorong Chen
- # @ Modified time: 2023-06-07 19:37:40
+ # @ Modified time: 2024-08-30 18:47:39
  # @ Description: MESA util
  """
-
 
 import pandas as pd
 import numpy as np
@@ -84,6 +83,21 @@ def MESA_preprocessing(X, train_index, test_index, ratio=1, normalization=False)
     return X_train_cleaned, X_test_cleaned
 
 
+# scorer for feature selection
+def wilcoxon(X, y):
+    """
+    Score function for feature selection using Wilcoxon rank-sum test.
+
+    Args:
+        X: dataframe or array of shape (n_features, n_samples)
+        y: array-like of shape (n_samples,)
+
+    Returns:
+        p-values of Wilcoxon rank-sum test for each feature
+    """
+    return -mannwhitneyu(X[y == 0], X[y == 1])[1]
+
+
 # Code for MESA single modality construction
 def MESA_single(
     X,
@@ -94,6 +108,7 @@ def MESA_single(
     random_state=0,
     boruta_top_n_feature=100,
     variance_threshold=0,
+    selector=None,
     missing_ratio=0.9,
     normalization=False,
     multiclass=False,
@@ -115,111 +130,52 @@ def MESA_single(
         Controls the pseudo random number generation for shuffling the data.
     boruta_top_n_feature : int, default=100
         Top-ranked feature to select after Boruta ranking
-    variance_threshold: int or float
+    variance_threshold: int or float, default=0
+        The threshold for initial feature filtering.
+    selector: object, default=None
+        Customed selector takes X and y as input and return an array of boolean score for each feature.
+    missing_ratio: float, default=0.9
+        Only features have valid values for > (ratio*samples) are kept and then imputed with mean value of the features.
+    normalization: boolean, default = False
+        Normalization for each feature before feature selection.
+    multiclass: boolean, default = False
+        If the target is multiclass (> 2)
     n_jobs : int, default=-1
         Number of jobs to run in parallel. When evaluating a new feature to add or remove, the cross-validation procedure is parallel over the folds. None means 1 unless in a joblib.parallel_backend context. -1 means using all processors.
 
 
     Returns
     ----------
-    feature_selected_all : a list of tuples (n_samples,)
-        Features selected in each LOO iteration.
-    y_true : array-like of shape (n_samples,)
-        Target values/labels.
-    y_pred_all : array-like of shape (n_samples, n_classifiers)
-        Predicted probablity given by the classifiers(Same order with input).
-    auc : array-like of shape (n_classifiers,)
-        AUC on test set, given by classifier(s) input(Same order with input).
-    """
-    cv_method = cv
-    y_pred_all = []
-    y_true = []
-    feature_selected_all = []
-    num = 1
-    if boruta_top_n_feature > X.shape[0]:
-        boruta_top_n_feature = X.shape[0]
-    cv_index = cv_method.split(X.T, y)
-    for train_index, test_index in cv_index:
-        print("=============== No.", num, " iteration ===============")
-        num += 1
-        """
-        Train-test spliting & Missing value imputation
-        """
-        X_train, X_test = MESA_preprocessing(
-            X, train_index, test_index, missing_ratio, normalization
-        )
-        X_train, X_test = X_train.values, X_test.values
-        y_train, y_test = np.array(y)[train_index], np.array(y)[test_index]
+    Cross-validation results for each iteration: list-like of shape (n_iterations)
+        For element in the list, it contains the following: [lables for test set, predicted probabilities by each classifier for each sample, index for selected features]
 
-        variance = VarianceThreshold().fit(X_train).variances_
-        variance_selected = np.where(variance > variance_threshold)[0]
-        print(
-            "VarianceThreshold(%s): %s/%s features filtered"
-            % (
-                variance_threshold,
-                X_train.shape[1] - len(variance_selected),
-                X_train.shape[1],
-            )
-        )
-
-        """
-        Boruta algorithm for ranking
-        """
-        boruta_ranking = (
-            BorutaPy(boruta_est, n_estimators="auto", random_state=random_state)
-            .fit(X_train[:, variance_selected], y_train)
-            .ranking_
-        )
-        rank = variance_selected[np.argsort(boruta_ranking)]
-        feature_selected = rank[:boruta_top_n_feature]
-        feature_selected_all.append(feature_selected)
-
-        """
-        Summary for output
-        """
-        y_pred_iter = []
-        for clf in classifiers:
-            clf.fit(X_train[:, feature_selected], y_train)
-            if multiclass:
-                y_pred = clf.predict(X_test[:, feature_selected])
-            else:
-                y_pred = clf.predict_proba(X_test[:, feature_selected])
-            y_pred_iter.append(y_pred[0])
-        y_pred_all.append(y_pred_iter)
-        y_true.append(y_test[0])
-    # predicted probability/lable for each sample
-    y_pred_all = np.array(y_pred_all)
-    return feature_selected_all, y_true, y_pred_all
-
-
-def wilcoxon(X, y):
-    return -mannwhitneyu(X[y == 0],X[y == 1])[1]
-
-
-# Code for MESA single modality construction
-def MESA_single_(
-    X,
-    y,
-    boruta_est=RandomForestClassifier(random_state=0, n_jobs=-1),
-    cv=LeaveOneOut(),
-    classifiers=[RandomForestClassifier(random_state=0, n_jobs=-1)],
-    random_state=0,
+    Example
+    ----------
+    mesa_result = MESA_single_(
+    X=temp_merged_sALS_ctrl_DHS,
+    y=y,
+    selector=GenericUnivariateSelect(score_func=wilcoxon, mode='k_best', param=2000),
+    boruta_est=RandomForestClassifier(random_state=random_state, n_jobs=-1),
+    cv=RepeatedStratifiedKFold(n_repeats=20,
+                                                        n_splits=5,
+                                                        random_state=0),
+    classifiers=[
+    RandomForestClassifier(random_state=0, n_jobs=3),
+    LogisticRegression(random_state=0, n_jobs=3)
+    ],
+    random_state=random_state,
     boruta_top_n_feature=100,
     variance_threshold=0,
-    selector=None,
-    missing_ratio=0.9,
-    normalization=False,
-    multiclass=False,
-):
+    missing_ratio=1,
+    normalization=True,
+    )
+    """
 
     cv_method = cv
-    y_pred_all = []
-    y_true = []
-    feature_selected_all = []
-    num = 1
     if boruta_top_n_feature > X.shape[0]:
         boruta_top_n_feature = X.shape[0]
     cv_index = cv_method.split(X.T, y)
+
     def cv_iteration(train_index, test_index):
         """
         Train-test spliting & Missing value imputation
@@ -229,7 +185,7 @@ def MESA_single_(
         )
         X_train, X_test = X_train.values, X_test.values
         y_train, y_test = np.array(y)[train_index], np.array(y)[test_index]
-    
+
         variance = VarianceThreshold().fit(X_train).variances_
         feature_selected = np.where(variance > variance_threshold)[0]
         print(
@@ -240,17 +196,16 @@ def MESA_single_(
                 X_train.shape[1],
             )
         )
-        
+
         """
         Selector for feature selection
         """
         if selector is not None:
-            feature_selected = feature_selected[clone(selector).fit(X_train[:, feature_selected], y_train).get_support()]
-        print(
-            "Customed selector: %s features selected"
-            %len(feature_selected)
-        )
-        
+            feature_selected = feature_selected[
+                clone(selector).fit(X_train[:, feature_selected], y_train).get_support()
+            ]
+        print("Customed selector: %s features selected" % len(feature_selected))
+
         """
         Boruta algorithm for ranking
         """
@@ -259,10 +214,12 @@ def MESA_single_(
             .fit(X_train[:, feature_selected], y_train)
             .ranking_
         )
-        feature_selected = feature_selected[np.argsort(boruta_ranking)][:boruta_top_n_feature]
-    
+        feature_selected = feature_selected[np.argsort(boruta_ranking)][
+            :boruta_top_n_feature
+        ]
+
         """
-        Summary for outputA BGVGTYHNM 
+        Summary for output
         """
         y_pred_iter = []
         for c in classifiers:
@@ -273,10 +230,12 @@ def MESA_single_(
             else:
                 y_pred = clf.predict_proba(X_test[:, feature_selected])
             y_pred_iter.append(y_pred)
-        return  y_test, y_pred_iter,feature_selected
-    return Parallel(n_jobs=-1, verbose=5)(delayed(cv_iteration)(train_index, test_index) for train_index, test_index in cv_index)
+        return y_test, y_pred_iter, feature_selected
 
-
+    return Parallel(n_jobs=-1, verbose=5)(
+        delayed(cv_iteration)(train_index, test_index)
+        for train_index, test_index in cv_index
+    )
 
 
 def base_prediction(estimator_list, X_list, y, train_index, test_index, random_state=0):
@@ -323,8 +282,6 @@ def stacking_predictor(
 
 
 # Integrate2 SBS results on different types of features
-
-
 def MESA_integration(
     X_list,
     y,
@@ -368,11 +325,15 @@ def MESA_integration(
         y_train, y_test = np.array(y)[train_index], np.array(y)[test_index]
 
         X_train_temp = [
-            MESA_preprocessing(X1, train_index, test_index, missing_ratio, normalization)[0]
+            MESA_preprocessing(
+                X1, train_index, test_index, missing_ratio, normalization
+            )[0]
             for X1 in X_list
         ]
         X_test_temp = [
-            MESA_preprocessing(X1, train_index, test_index, missing_ratio, normalization)[1]
+            MESA_preprocessing(
+                X1, train_index, test_index, missing_ratio, normalization
+            )[1]
             for X1 in X_list
         ]
         X_train = [
@@ -408,13 +369,19 @@ def MESA_integration(
 
 
 def MESA_summary(single_result, clf_num=1, multiclass=False):
-    y_true = single_result[1]
+    y_true = single_result[0]
     if multiclass:
-        y_pred = [[_[clf] for _ in single_result[2]] for clf in range(clf_num)]
+        y_pred = [[_[clf] for _ in single_result[1]] for clf in range(clf_num)]
         performance = [(accuracy_score(y_true, y_pred[clf])) for clf in range(clf_num)]
     else:
-        y_pred = [[_[clf][1] for _ in single_result[2]] for clf in range(clf_num)]
-        performance = [(roc_auc_score(y_true, y_pred[clf])) for clf in range(clf_num)]
+        y_true = [_[0] for _ in single_result]
+        y_pred = [[_[1][clf][:, 1] for _ in single_result] for clf in range(clf_num)]
+        performance = np.array(
+            [
+                [roc_auc_score(y_true[_], y_pred[clf][_]) for _ in range(len(y_true))]
+                for clf in range(clf_num)
+            ]
+        ).mean(axis=1)
     return y_true, y_pred, performance
 
 
