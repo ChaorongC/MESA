@@ -2,7 +2,7 @@
  # @ Author: Chaorong Chen
  # @ Create Time: 2022-06-14 17:00:56
  # @ Modified by: Chaorong Chen
- # @ Modified time: 2024-08-30 18:47:39
+ # @ Modified time: 2024-11-01 17:46:55
  # @ Description: MESA util
  """
 
@@ -108,7 +108,7 @@ def MESA_single(
     random_state=0,
     boruta_top_n_feature=100,
     variance_threshold=0,
-    selector=None,
+    selector=GenericUnivariateSelect(score_func=wilcoxon, mode="k_best", param=2000),
     missing_ratio=0.9,
     normalization=False,
     multiclass=False,
@@ -386,11 +386,15 @@ def MESA_summary(single_result, clf_num=1, multiclass=False):
 
 
 def MESA_integration_summary(integration_result, multiclass=False):
-    y_ture = integration_result[0]
+    y_true = [_ for _ in integration_result[0]]
     if multiclass:
-        y_pred = np.array(integration_result[1])
-        performance = accuracy_score(y_ture, y_pred)
+        y_pred = test_result[1]
+        performance = np.array(
+            [accuracy_score(y_true[_], y_pred[_]) for _ in range(len(y_true))]
+        ).mean()
     else:
-        y_pred = np.array(integration_result[1])[:, 1]
-        performance = roc_auc_score(y_ture, y_pred)
-    return y_ture, y_pred, performance
+        y_pred = [_[:, 1] for _ in integration_result[1]]
+        performance = np.array(
+            [roc_auc_score(y_true[_], y_pred[_]) for _ in range(len(y_true))]
+        ).mean()
+    return y_true, y_pred, performance
