@@ -2,7 +2,7 @@
  # @ Author: Chaorong Chen
  # @ Create Time: 2022-06-14 17:00:56
  # @ Modified by: Chaorong Chen
- # @ Modified time: 2024-11-01 17:46:55
+ # @ Modified time: 2024-11-01 17:47:30
  # @ Description: MESA util
  """
 
@@ -388,7 +388,7 @@ def MESA_summary(single_result, clf_num=1, multiclass=False):
 def MESA_integration_summary(integration_result, multiclass=False):
     y_true = [_ for _ in integration_result[0]]
     if multiclass:
-        y_pred = test_result[1]
+        y_pred = integration_result[1]
         performance = np.array(
             [accuracy_score(y_true[_], y_pred[_]) for _ in range(len(y_true))]
         ).mean()
