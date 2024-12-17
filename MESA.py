@@ -2,7 +2,7 @@
  # @ Author: Chaorong Chen
  # @ Create Time: 2022-06-14 17:00:56
  # @ Modified by: Chaorong Chen
- # @ Modified time: 2024-12-17 01:49:45
+ # @ Modified time: 2024-12-17 02:02:25
  # @ Description: MESA
  """
 
@@ -413,6 +413,7 @@ class MESA_CV:
         selector=GenericUnivariateSelect(score_func=wilcoxon, mode="k_best", param=20),
         boruta_est=RandomForestClassifier(random_state=0, n_jobs=-1),
         classifier=RandomForestClassifier(random_state=0, n_jobs=-1),
+        normalization=False,
         variance_threshold=0.1,
         top_n=100, 
         missing=0.1,
@@ -427,6 +428,7 @@ class MESA_CV:
         self.boruta_est = boruta_est
         self.classifier = classifier
         self.missing = missing
+        self.normalization = normalization
         self.variance_threshold = (
             variance_threshold  # todo: consider situation when have multiple modalities
         )
