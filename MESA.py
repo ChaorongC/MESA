@@ -2,7 +2,7 @@
  # @ Author: Chaorong Chen
  # @ Create Time: 2022-06-14 17:00:56
  # @ Modified by: Chaorong Chen
- # @ Modified time: 2024-12-16 16:45:00
+ # @ Modified time: 2024-12-16 18:17:49
  # @ Description: MESA
  """
 
@@ -36,63 +36,6 @@ def wilcoxon(X, y):
     return -mannwhitneyu(X[y == 0], X[y == 1])[1]
 
 
-# Code for missing value imputation and dataset splitting
-
-
-def cv_preprocessing(X, train_index, test_index, ratio=1, normalization=False):
-    """
-    Parameters
-    ----------
-    X : dataframe of shape (n_features, n_samples)
-        Input samples.
-    train_index : list/array/tuple of
-        The training set indices for the LOO split.
-    test_index : list/array/tuple of
-        The testing set indices for the LOO split.
-    ratio : float, default = 1
-        The threshold for feature filtering. Only features have valid values for > (ratio*samples) are kept and then imputed.
-    normalization: boolean, default = False
-        If scale dataset witt normalizer during preprocessing
-    Returns
-    ----------
-    X_train_cleaned : dataframe of shape (n_train_samples, n_features)
-        Cleaned, missing-value-imputed training set.
-    X_test_cleaned :dataframe of shape (n_test_samples, n_features)
-        Cleaned, missing-value-imputed testing datasets.
-    """
-    X_temp = X
-    X_train_temp, X_test_temp = X_temp.iloc[:, train_index], X_temp.iloc[:, test_index]
-    X_train_valid = X_train_temp.count(axis="columns")
-    X_train_seleted = np.where(X_train_valid >= X_train_temp.shape[1] * ratio)[0]
-    imputer = SimpleImputer(strategy="mean")
-    if normalization:
-        scaler = Normalizer()
-        X_train_cleaned = pd.DataFrame(
-            scaler.fit_transform(
-                imputer.fit_transform(X_train_temp.iloc[X_train_seleted].T.values)
-            )
-        )
-        X_test_cleaned = pd.DataFrame(
-            scaler.transform(
-                imputer.transform(X_test_temp.iloc[X_train_seleted].T.values)
-            )
-        )
-    else:
-        X_train_cleaned = pd.DataFrame(
-            imputer.fit_transform(X_train_temp.iloc[X_train_seleted].T.values)
-        )
-        X_test_cleaned = pd.DataFrame(
-            imputer.transform(X_test_temp.iloc[X_train_seleted].T.values)
-        )
-    X_train_cleaned.index, X_test_cleaned.index = (
-        X_temp.columns[train_index],
-        X_temp.columns[test_index],
-    )  # put Sample ID back
-    X_train_cleaned.columns, X_test_cleaned.columns = (
-        X.iloc[X_train_seleted, 0],
-        X.iloc[X_train_seleted, 0],
-    )
-    return X_train_cleaned, X_test_cleaned
 
 
 class BorutaSelector(BorutaPy):
@@ -368,6 +311,67 @@ class MESA:
         return self.meta_estimator.predict_proba(base_probability_test)
 
 
+# Code for missing value imputation and dataset splitting
+
+
+def cv_preprocessing(X, train_index, test_index, ratio=1, normalization=False):
+    """
+    Parameters
+    ----------
+    X : dataframe of shape (n_features, n_samples)
+        Input samples.
+    train_index : list/array/tuple of
+        The training set indices for the LOO split.
+    test_index : list/array/tuple of
+        The testing set indices for the LOO split.
+    ratio : float, default = 1
+        The threshold for feature filtering. Only features have valid values for > (ratio*samples) are kept and then imputed.
+    normalization: boolean, default = False
+        If scale dataset witt normalizer during preprocessing
+    Returns
+    ----------
+    X_train_cleaned : dataframe of shape (n_train_samples, n_features)
+        Cleaned, missing-value-imputed training set.
+    X_test_cleaned :dataframe of shape (n_test_samples, n_features)
+        Cleaned, missing-value-imputed testing datasets.
+    """
+    X_temp = X
+    X_train_temp, X_test_temp = X_temp.iloc[:, train_index], X_temp.iloc[:, test_index]
+    X_train_valid = X_train_temp.count(axis="columns")
+    X_train_seleted = np.where(X_train_valid >= X_train_temp.shape[1] * ratio)[0]
+    imputer = SimpleImputer(strategy="mean")
+    if normalization:
+        scaler = Normalizer()
+        X_train_cleaned = pd.DataFrame(
+            scaler.fit_transform(
+                imputer.fit_transform(X_train_temp.iloc[X_train_seleted].T.values)
+            )
+        )
+        X_test_cleaned = pd.DataFrame(
+            scaler.transform(
+                imputer.transform(X_test_temp.iloc[X_train_seleted].T.values)
+            )
+        )
+    else:
+        X_train_cleaned = pd.DataFrame(
+            imputer.fit_transform(X_train_temp.iloc[X_train_seleted].T.values)
+        )
+        X_test_cleaned = pd.DataFrame(
+            imputer.transform(X_test_temp.iloc[X_train_seleted].T.values)
+        )
+    X_train_cleaned.index, X_test_cleaned.index = (
+        X_temp.columns[train_index],
+        X_temp.columns[test_index],
+    )  # put Sample ID back
+    X_train_cleaned.columns, X_test_cleaned.columns = (
+        X.iloc[X_train_seleted, 0],
+        X.iloc[X_train_seleted, 0],
+    )
+    return X_train_cleaned, X_test_cleaned
+
+
+
+
 class MESA_CV:
     """
     A class used to perform cross-validation for the MESA model.
@@ -527,7 +531,7 @@ class MESA_CV:
                     self.normalization,
                     self.variance_threshold,
                 )
-                for train_index, test_index in self.cv.split(X.T, y)
+                for train_index, test_index in self.cv.split(X, y)
             )
         elif isinstance(X, (pd.DataFrame, np.ndarray)):  # single modality
             self.cv_result = Parallel(n_jobs=-1)(
@@ -540,7 +544,7 @@ class MESA_CV:
                     self.normalization,
                     self.variance_threshold,
                 )
-                for train_index, test_index in self.cv.split(X.T, y)
+                for train_index, test_index in self.cv.split(X, y)
             )
         else:
             raise ValueError(
