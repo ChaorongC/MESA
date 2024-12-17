@@ -2,7 +2,7 @@
  # @ Author: Chaorong Chen
  # @ Create Time: 2022-06-14 17:00:56
  # @ Modified by: Chaorong Chen
- # @ Modified time: 2024-12-16 16:40:00
+ # @ Modified time: 2024-12-16 16:45:00
  # @ Description: MESA
  """
 
@@ -39,7 +39,7 @@ def wilcoxon(X, y):
 # Code for missing value imputation and dataset splitting
 
 
-def MESA_preprocessing(X, train_index, test_index, ratio=1, normalization=False):
+def cv_preprocessing(X, train_index, test_index, ratio=1, normalization=False):
     """
     Parameters
     ----------
@@ -439,7 +439,7 @@ class MESA_CV:
         variance_threshold,
         proba=True,
     ):
-        X_train, X_test = MESA_preprocessing(
+        X_train, X_test = cv_preprocessing(
             X, train_index, test_index, missing_ratio, normalization
         )
         X_train, X_test = X_train.values, X_test.values
@@ -472,14 +472,14 @@ class MESA_CV:
         variance_threshold,
         proba=True,
     ):
-        X_train, X_test = MESA_preprocessing(
+        X_train, X_test = cv_preprocessing(
             X, train_index, test_index, missing_ratio, normalization
         )
         X_train, X_test = X_train.values, X_test.values
         y_train, y_test = np.array(y)[train_index], np.array(y)[test_index]
 
         temp = [
-            MESA_preprocessing(
+            cv_preprocessing(
                 X_, train_index, test_index, missing_ratio, normalization
             )
             for X_ in X
