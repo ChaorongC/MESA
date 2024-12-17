@@ -2,7 +2,7 @@
  # @ Author: Chaorong Chen
  # @ Create Time: 2022-06-14 17:00:56
  # @ Modified by: Chaorong Chen
- # @ Modified time: 2024-12-17 02:26:48
+ # @ Modified time: 2024-12-17 03:25:30
  # @ Description: MESA
  """
 
@@ -339,7 +339,7 @@ def cv_preprocessing(X, train_index, test_index, ratio=1, normalization=False):
     X_temp = X
     X_train_temp, X_test_temp = X_temp.iloc[train_index, :], X_temp.iloc[test_index, :]
     X_train_seleted = np.where(
-        X_train_temp.count(axis="rows") >= X_train_temp.shape[1] * ratio
+        X_train_temp.count(axis="rows") >= X_train_temp.shape[0] * ratio
     )[0]
     imputer = SimpleImputer(strategy="mean")
     if normalization:
@@ -415,7 +415,7 @@ class MESA_CV:
         boruta_est=RandomForestClassifier(random_state=0, n_jobs=-1),
         classifier=RandomForestClassifier(random_state=0, n_jobs=-1),
         normalization=False,
-        variance_threshold=0.1,
+        variance_threshold=0,
         top_n=100,
         missing=0.1,
         **kwargs  # meta_estimator=RandomForestClassifier(random_state=0, n_jobs=-1),
@@ -446,6 +446,7 @@ class MESA_CV:
         missing_ratio,
         normalization,
         variance_threshold,
+        selector,
         proba=True,
     ):
         X_train, X_test = cv_preprocessing(
@@ -455,7 +456,7 @@ class MESA_CV:
         y_train, y_test = np.array(y)[train_index], np.array(y)[test_index]
 
         modality = MESA_modality(
-            selector=self.selector,
+            selector=selector,
             random_state=self.random_state,
             top_n=self.top_n,
             missing=0,
@@ -479,6 +480,7 @@ class MESA_CV:
         missing_ratio,
         normalization,
         variance_threshold,
+        selector,
         proba=True,
     ):
         temp = [
@@ -494,7 +496,7 @@ class MESA_CV:
 
         modalities = [
             MESA_modality(
-                selector=self.selector,
+                selector=selector,
                 random_state=self.random_state,
                 top_n=self.top_n,
                 missing=0,
@@ -516,6 +518,7 @@ class MESA_CV:
         return y_pred, y_test
 
     def fit(self, X, y):
+        slctr = clone(self.seletor)
         if (
             isinstance(X, Sequence) and not isinstance(X, str) and len(X) > 1
         ):  # multiple modalities
@@ -529,6 +532,7 @@ class MESA_CV:
                     self.missing,
                     self.normalization,
                     self.variance_threshold,
+                    slctr,
                 )
                 for train_index, test_index in self.cv.split(X, y)
             )
@@ -542,6 +546,7 @@ class MESA_CV:
                     self.missing,
                     self.normalization,
                     self.variance_threshold,
+                    slctr
                 )
                 for train_index, test_index in self.cv.split(X, y)
             )
@@ -552,7 +557,7 @@ class MESA_CV:
         return self
 
     def get_performance(self):
-        y_pred = [_[0] for _ in self.cv_result]
+        y_pred = [_[0][:,1] for _ in self.cv_result]
         y_true = [_[1] for _ in self.cv_result]
         return np.array(
             [roc_auc_score(y_true[_], y_pred[_]) for _ in range(len(y_true))]
