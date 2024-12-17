@@ -2,7 +2,7 @@
  # @ Author: Chaorong Chen
  # @ Create Time: 2022-06-14 17:00:56
  # @ Modified by: Chaorong Chen
- # @ Modified time: 2024-12-17 03:25:30
+ # @ Modified time: 2024-12-17 04:34:18
  # @ Description: MESA
  """
 
@@ -534,7 +534,9 @@ class MESA_CV:
                     self.variance_threshold,
                     slctr,
                 )
-                for train_index, test_index in self.cv.split(X, y)
+                for train_index, test_index in self.cv.split(
+                    X[0], y
+                )  # check if all X_ is have the same sample index
             )
         elif isinstance(X, (pd.DataFrame, np.ndarray)):  # single modality
             self.cv_result = Parallel(n_jobs=-1)(
@@ -546,7 +548,7 @@ class MESA_CV:
                     self.missing,
                     self.normalization,
                     self.variance_threshold,
-                    slctr
+                    slctr,
                 )
                 for train_index, test_index in self.cv.split(X, y)
             )
@@ -557,7 +559,7 @@ class MESA_CV:
         return self
 
     def get_performance(self):
-        y_pred = [_[0][:,1] for _ in self.cv_result]
+        y_pred = [_[0][:, 1] for _ in self.cv_result]
         y_true = [_[1] for _ in self.cv_result]
         return np.array(
             [roc_auc_score(y_true[_], y_pred[_]) for _ in range(len(y_true))]
