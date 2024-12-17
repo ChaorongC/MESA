@@ -2,7 +2,7 @@
  # @ Author: Chaorong Chen
  # @ Create Time: 2022-06-14 17:00:56
  # @ Modified by: Chaorong Chen
- # @ Modified time: 2024-12-16 18:17:49
+ # @ Modified time: 2024-12-17 01:49:45
  # @ Description: MESA
  """
 
@@ -414,7 +414,8 @@ class MESA_CV:
         boruta_est=RandomForestClassifier(random_state=0, n_jobs=-1),
         classifier=RandomForestClassifier(random_state=0, n_jobs=-1),
         variance_threshold=0.1,
-        top_n=100,
+        top_n=100, 
+        missing=0.1,
         **kwargs  # meta_estimator=RandomForestClassifier(random_state=0, n_jobs=-1),
     ):
         # self.meta_estimator = meta_estimator
@@ -425,6 +426,7 @@ class MESA_CV:
         self.kwargs = kwargs
         self.boruta_est = boruta_est
         self.classifier = classifier
+        self.missing = missing
         self.variance_threshold = (
             variance_threshold  # todo: consider situation when have multiple modalities
         )
