@@ -2,7 +2,7 @@
  # @ Author: Chaorong Chen
  # @ Create Time: 2022-06-14 17:00:56
  # @ Modified by: Chaorong Chen
- # @ Modified time: 2024-12-13 02:14:10
+ # @ Modified time: 2024-12-16 16:40:00
  # @ Description: MESA
  """
 
@@ -10,6 +10,7 @@ import pandas as pd
 from sklearn.base import clone
 from joblib import Parallel, delayed
 import numpy as np
+from sklearn.impute import SimpleImputer
 from sklearn.metrics import roc_auc_score
 from sklearn.model_selection import StratifiedKFold
 from boruta import BorutaPy
@@ -35,7 +36,83 @@ def wilcoxon(X, y):
     return -mannwhitneyu(X[y == 0], X[y == 1])[1]
 
 
+# Code for missing value imputation and dataset splitting
+
+
+def MESA_preprocessing(X, train_index, test_index, ratio=1, normalization=False):
+    """
+    Parameters
+    ----------
+    X : dataframe of shape (n_features, n_samples)
+        Input samples.
+    train_index : list/array/tuple of
+        The training set indices for the LOO split.
+    test_index : list/array/tuple of
+        The testing set indices for the LOO split.
+    ratio : float, default = 1
+        The threshold for feature filtering. Only features have valid values for > (ratio*samples) are kept and then imputed.
+    normalization: boolean, default = False
+        If scale dataset witt normalizer during preprocessing
+    Returns
+    ----------
+    X_train_cleaned : dataframe of shape (n_train_samples, n_features)
+        Cleaned, missing-value-imputed training set.
+    X_test_cleaned :dataframe of shape (n_test_samples, n_features)
+        Cleaned, missing-value-imputed testing datasets.
+    """
+    X_temp = X
+    X_train_temp, X_test_temp = X_temp.iloc[:, train_index], X_temp.iloc[:, test_index]
+    X_train_valid = X_train_temp.count(axis="columns")
+    X_train_seleted = np.where(X_train_valid >= X_train_temp.shape[1] * ratio)[0]
+    imputer = SimpleImputer(strategy="mean")
+    if normalization:
+        scaler = Normalizer()
+        X_train_cleaned = pd.DataFrame(
+            scaler.fit_transform(
+                imputer.fit_transform(X_train_temp.iloc[X_train_seleted].T.values)
+            )
+        )
+        X_test_cleaned = pd.DataFrame(
+            scaler.transform(
+                imputer.transform(X_test_temp.iloc[X_train_seleted].T.values)
+            )
+        )
+    else:
+        X_train_cleaned = pd.DataFrame(
+            imputer.fit_transform(X_train_temp.iloc[X_train_seleted].T.values)
+        )
+        X_test_cleaned = pd.DataFrame(
+            imputer.transform(X_test_temp.iloc[X_train_seleted].T.values)
+        )
+    X_train_cleaned.index, X_test_cleaned.index = (
+        X_temp.columns[train_index],
+        X_temp.columns[test_index],
+    )  # put Sample ID back
+    X_train_cleaned.columns, X_test_cleaned.columns = (
+        X.iloc[X_train_seleted, 0],
+        X.iloc[X_train_seleted, 0],
+    )
+    return X_train_cleaned, X_test_cleaned
+
+
 class BorutaSelector(BorutaPy):
+    """
+    BorutaSelector is a feature selection class that extends BorutaPy to select the top n features based on their ranking.
+    Parameters
+    ----------
+    n : int, optional (default=10)
+        The number of top features to select.
+    **kwargs : 
+        Additional keyword arguments to pass to the BorutaPy constructor.
+    Methods
+    -------
+    fit(X, y)
+        Fits the Boruta feature selection algorithm on the provided data.
+    transform(X)
+        Transforms the data to contain only the selected top n features.
+    get_support()
+        Returns the indices of the selected top n features.
+    """
     def __init__(self, n=10, **kwargs):
         super().__init__(**kwargs)
         self.n = n
@@ -60,6 +137,47 @@ class BorutaSelector(BorutaPy):
 
 
 class MESA_modality:
+    """
+    A class used to represent the MESA modality.
+
+    Attributes
+    ----------
+    random_state : int
+        Random seed for reproducibility.
+    boruta_estimator : estimator object
+        The estimator used for the Boruta feature selection.
+    top_n : int
+        Number of top features to select using Boruta.
+    variance_threshold : float
+        Threshold for variance threshold feature selection.
+    normalization : bool
+        Whether to apply normalization to the data.
+    missing : float
+        Threshold for missing values.
+    classifier : estimator object
+        The classifier used for prediction.
+    selector : selector object
+        The selector used for univariate feature selection.
+
+    Methods
+    -------
+    fit(X, y)
+        Fits the pipeline and classifier to the data.
+    transform(X)
+        Transforms the data using the fitted pipeline.
+    predict(X)
+        Predicts the class labels for the input data.
+    predict_proba(X)
+        Predicts class probabilities for the input data.
+    transform_predict(X)
+        Transforms the data and then predicts the class labels.
+    transform_predict_proba(X)
+        Transforms the data and then predicts class probabilities.
+    get_support(step=None)
+        Gets the indices of the selected features.
+    get_params(deep=True)
+        Gets the parameters of the MESA_modality instance.
+    """
     def __init__(
         self,
         random_state=0,
@@ -141,6 +259,43 @@ class MESA_modality:
 
 
 class MESA:
+    """
+
+    Parameters
+    ----------
+    meta_estimator : estimator object
+        The meta-estimator to be used for stacking the base estimators.
+    random_state : int, default=0
+        The seed used by the random number generator.
+    cv : cross-validation generator, default=StratifiedKFold(n_splits=5, shuffle=True, random_state=0)
+        The cross-validation splitting strategy.
+    **kwargs : additional keyword arguments
+        Additional parameters to set as attributes of the class.
+
+    Methods
+    -------
+    fit(modalities, X_list, y)
+        Fit the model to the training data.
+    predict(X_list_test)
+        Predict the class labels for the provided data.
+    predict_proba(X_list_test)
+        Predict class probabilities for the provided data.
+
+    Attributes
+    ----------
+    meta_estimator : estimator object
+        The meta-estimator used for stacking.
+    random_state : int
+        The seed used by the random number generator.
+    cv : cross-validation generator
+        The cross-validation splitting strategy.
+    modalities : list
+        List of modalities (base estimators).
+    base_estimators : list
+        List of fitted base estimators.
+    splits : list
+        List of train-test indices for cross-validation.
+    """
     def __init__(
         self,
         meta_estimator,
@@ -214,6 +369,39 @@ class MESA:
 
 
 class MESA_CV:
+    """
+    A class used to perform cross-validation for the MESA model.
+
+    Attributes
+    ----------
+    random_state : int
+        Random seed for reproducibility.
+    cv : StratifiedKFold
+        Cross-validation splitting strategy.
+    selector : GenericUnivariateSelect
+        Feature selection method.
+    boruta_est : RandomForestClassifier
+        Estimator used for Boruta feature selection.
+    classifier : RandomForestClassifier
+        Classifier used for training.
+    variance_threshold : float
+        Threshold for variance-based feature selection.
+    top_n : int
+        Number of top features to select.
+    kwargs : dict
+        Additional keyword arguments.
+
+    Methods
+    -------
+    _cv_iter(X, y, train_index, test_index, missing_ratio, normalization, variance_threshold, proba=True)
+        Perform a single iteration of cross-validation for a single modality.
+    _cv_iter_mesa(X, y, train_index, test_index, missing_ratio, normalization, variance_threshold, proba=True)
+        Perform a single iteration of cross-validation for multiple modalities.
+    fit(X, y)
+        Fit the model using cross-validation.
+    get_performance()
+        Calculate the performance of the model using ROC AUC score.
+    """
     def __init__(
         self,
         random_state=0,
