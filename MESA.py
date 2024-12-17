@@ -2,7 +2,7 @@
  # @ Author: Chaorong Chen
  # @ Create Time: 2022-06-14 17:00:56
  # @ Modified by: Chaorong Chen
- # @ Modified time: 2024-12-17 02:02:25
+ # @ Modified time: 2024-12-17 02:26:48
  # @ Description: MESA
  """
 
@@ -36,8 +36,6 @@ def wilcoxon(X, y):
     return -mannwhitneyu(X[y == 0], X[y == 1])[1]
 
 
-
-
 class BorutaSelector(BorutaPy):
     """
     BorutaSelector is a feature selection class that extends BorutaPy to select the top n features based on their ranking.
@@ -45,7 +43,7 @@ class BorutaSelector(BorutaPy):
     ----------
     n : int, optional (default=10)
         The number of top features to select.
-    **kwargs : 
+    **kwargs :
         Additional keyword arguments to pass to the BorutaPy constructor.
     Methods
     -------
@@ -56,6 +54,7 @@ class BorutaSelector(BorutaPy):
     get_support()
         Returns the indices of the selected top n features.
     """
+
     def __init__(self, n=10, **kwargs):
         super().__init__(**kwargs)
         self.n = n
@@ -121,6 +120,7 @@ class MESA_modality:
     get_params(deep=True)
         Gets the parameters of the MESA_modality instance.
     """
+
     def __init__(
         self,
         random_state=0,
@@ -239,6 +239,7 @@ class MESA:
     splits : list
         List of train-test indices for cross-validation.
     """
+
     def __init__(
         self,
         meta_estimator,
@@ -336,40 +337,39 @@ def cv_preprocessing(X, train_index, test_index, ratio=1, normalization=False):
         Cleaned, missing-value-imputed testing datasets.
     """
     X_temp = X
-    X_train_temp, X_test_temp = X_temp.iloc[:, train_index], X_temp.iloc[:, test_index]
-    X_train_valid = X_train_temp.count(axis="columns")
-    X_train_seleted = np.where(X_train_valid >= X_train_temp.shape[1] * ratio)[0]
+    X_train_temp, X_test_temp = X_temp.iloc[train_index, :], X_temp.iloc[test_index, :]
+    X_train_seleted = np.where(
+        X_train_temp.count(axis="rows") >= X_train_temp.shape[1] * ratio
+    )[0]
     imputer = SimpleImputer(strategy="mean")
     if normalization:
         scaler = Normalizer()
         X_train_cleaned = pd.DataFrame(
             scaler.fit_transform(
-                imputer.fit_transform(X_train_temp.iloc[X_train_seleted].T.values)
+                imputer.fit_transform(X_train_temp.iloc[:, X_train_seleted].values)
             )
         )
         X_test_cleaned = pd.DataFrame(
             scaler.transform(
-                imputer.transform(X_test_temp.iloc[X_train_seleted].T.values)
+                imputer.transform(X_test_temp.iloc[:, X_train_seleted].values)
             )
         )
     else:
         X_train_cleaned = pd.DataFrame(
-            imputer.fit_transform(X_train_temp.iloc[X_train_seleted].T.values)
+            imputer.fit_transform(X_train_temp.iloc[:, X_train_seleted].values)
         )
         X_test_cleaned = pd.DataFrame(
-            imputer.transform(X_test_temp.iloc[X_train_seleted].T.values)
+            imputer.transform(X_test_temp.iloc[:, X_train_seleted].values)
         )
     X_train_cleaned.index, X_test_cleaned.index = (
-        X_temp.columns[train_index],
-        X_temp.columns[test_index],
+        X_temp.index[train_index],
+        X_temp.index[test_index],
     )  # put Sample ID back
     X_train_cleaned.columns, X_test_cleaned.columns = (
-        X.iloc[X_train_seleted, 0],
-        X.iloc[X_train_seleted, 0],
+        X.columns[X_train_seleted],
+        X.columns[X_train_seleted],
     )
     return X_train_cleaned, X_test_cleaned
-
-
 
 
 class MESA_CV:
@@ -406,6 +406,7 @@ class MESA_CV:
     get_performance()
         Calculate the performance of the model using ROC AUC score.
     """
+
     def __init__(
         self,
         random_state=0,
@@ -415,7 +416,7 @@ class MESA_CV:
         classifier=RandomForestClassifier(random_state=0, n_jobs=-1),
         normalization=False,
         variance_threshold=0.1,
-        top_n=100, 
+        top_n=100,
         missing=0.1,
         **kwargs  # meta_estimator=RandomForestClassifier(random_state=0, n_jobs=-1),
     ):
@@ -448,7 +449,7 @@ class MESA_CV:
         proba=True,
     ):
         X_train, X_test = cv_preprocessing(
-            X, train_index, test_index, missing_ratio, normalization
+            X, train_index, test_index, 1 - missing_ratio, normalization
         )
         X_train, X_test = X_train.values, X_test.values
         y_train, y_test = np.array(y)[train_index], np.array(y)[test_index]
@@ -480,15 +481,9 @@ class MESA_CV:
         variance_threshold,
         proba=True,
     ):
-        X_train, X_test = cv_preprocessing(
-            X, train_index, test_index, missing_ratio, normalization
-        )
-        X_train, X_test = X_train.values, X_test.values
-        y_train, y_test = np.array(y)[train_index], np.array(y)[test_index]
-
         temp = [
             cv_preprocessing(
-                X_, train_index, test_index, missing_ratio, normalization
+                X_, train_index, test_index, 1 - missing_ratio, normalization
             )
             for X_ in X
         ]
