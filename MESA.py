@@ -2,7 +2,7 @@
  # @ Author: Chaorong Chen
  # @ Create Time: 2022-06-14 17:00:56
  # @ Modified by: Chaorong Chen
- # @ Modified time: 2024-12-18 04:07:38
+ # @ Modified time: 2024-12-18 04:21:00
  # @ Description: MESA
  """
 
@@ -539,6 +539,7 @@ class MESA_CV:
                 )  # check if all X_ is have the same sample index
             )
         elif isinstance(X, (pd.DataFrame, np.ndarray)):  # single modality
+            print("Single modality input")
             self.cv_result = Parallel(n_jobs=-1)(
                 delayed(self._cv_iter)(
                     X,
