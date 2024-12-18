@@ -2,7 +2,7 @@
  # @ Author: Chaorong Chen
  # @ Create Time: 2022-06-14 17:00:56
  # @ Modified by: Chaorong Chen
- # @ Modified time: 2024-12-17 04:34:18
+ # @ Modified time: 2024-12-18 04:07:38
  # @ Description: MESA
  """
 
@@ -411,7 +411,7 @@ class MESA_CV:
         self,
         random_state=0,
         cv=StratifiedKFold(n_splits=5, shuffle=True, random_state=0),
-        selector=GenericUnivariateSelect(score_func=wilcoxon, mode="k_best", param=20),
+        selector=GenericUnivariateSelect(score_func=wilcoxon, mode="k_best", param=2000),
         boruta_est=RandomForestClassifier(random_state=0, n_jobs=-1),
         classifier=RandomForestClassifier(random_state=0, n_jobs=-1),
         normalization=False,
