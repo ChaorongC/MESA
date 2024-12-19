@@ -2,7 +2,7 @@
  # @ Author: Chaorong Chen
  # @ Create Time: 2022-06-14 17:00:56
  # @ Modified by: Chaorong Chen
- # @ Modified time: 2024-12-19 15:49:49
+ # @ Modified time: 2024-12-19 15:52:47
  # @ Description: MESA
  """
 
@@ -89,7 +89,7 @@ class missing_value_processing:
         self.ratio = ratio
         self.imputer = imputer
 
-    def fit(self, X):
+    def fit(self, X, y=None):
         if self.ratio > 0:
             self.X_valid = np.where(X.count(axis="rows") >= X.shape[0] * self.ratio)[0]
             self.imputer = clone(self.imputer).fit(X.iloc[:, self.X_valid])
