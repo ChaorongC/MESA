@@ -2,7 +2,7 @@
  # @ Author: Chaorong Chen
  # @ Create Time: 2022-06-14 17:00:56
  # @ Modified by: Chaorong Chen
- # @ Modified time: 2024-12-19 01:31:51
+ # @ Modified time: 2024-12-19 15:49:49
  # @ Description: MESA
  """
 
@@ -23,8 +23,10 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import Normalizer, StandardScaler
 from collections.abc import Sequence
 
+
 def disp_mesa(txt):
     print("@%s \t%s" % (time.asctime(), txt), file=sys.stderr)
+
 
 def wilcoxon(X, y):
     """
@@ -80,6 +82,30 @@ class BorutaSelector(BorutaPy):
 
     def get_support(self):
         return self.indices
+
+
+class missing_value_processing:
+    def __init__(self, ratio=0.9, imputer=SimpleImputer(strategy="mean")):
+        self.ratio = ratio
+        self.imputer = imputer
+
+    def fit(self, X):
+        if self.ratio > 0:
+            self.X_valid = np.where(X.count(axis="rows") >= X.shape[0] * self.ratio)[0]
+            self.imputer = clone(self.imputer).fit(X.iloc[:, self.X_valid])
+            return self
+        else:
+            raise ValueError("The ratio of valid values should be greater than 0.")
+
+    def transform(self, X):
+        if self.missing > 0:
+            return pd.DataFrame(
+                self.imputer.transform(X.iloc[:, self.X_valid]),
+                index=X.index,
+                columns=X.columns[self.X_valid],
+            )
+        else:
+            raise ValueError("The ratio of valid values should be greater than 0.")
 
 
 class MESA_modality:
@@ -153,6 +179,7 @@ class MESA_modality:
 
     def fit(self, X, y):
         pipeline_steps = [
+            missing_value_processing(ratio=1 - self.missing),
             VarianceThreshold(self.variance_threshold),
             self.selector,
             BorutaSelector(
@@ -164,7 +191,7 @@ class MESA_modality:
             ),
         ]
         if self.normalization:
-            pipeline_steps.insert(0, Normalizer())
+            pipeline_steps.insert(1, Normalizer())
         self.pipeline = make_pipeline(*pipeline_steps).fit(X, y)
         self.classifier = self.classifier.fit(self.pipeline.transform(X), y)
         return self
@@ -293,7 +320,7 @@ class MESA:
         )
         base_probability = np.hstack(
             [
-                self._base_fit(m.transform(X), y, clone(m.classifier)) ########
+                self._base_fit(m.transform(X), y, clone(m.classifier))  ########
                 for m, X in zip(modalities, X_list)
             ]
         )
