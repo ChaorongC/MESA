@@ -2,7 +2,7 @@
  # @ Author: Chaorong Chen
  # @ Create Time: 2022-06-14 17:00:56
  # @ Modified by: Chaorong Chen
- # @ Modified time: 2024-12-19 01:14:38
+ # @ Modified time: 2024-12-19 01:18:05
  # @ Description: MESA
  """
 
@@ -289,7 +289,7 @@ class MESA:
         )
         base_probability = np.hstack(
             [
-                self._base_fit(m.transform(X), y, clone(m.classifier))  ########
+                self._base_fit(m.transform(X), y, clone(m.classifier)) ########
                 for m, X in zip(modalities, X_list)
             ]
         )
@@ -540,11 +540,7 @@ class MESA_CV:
                     X[0], y
                 )  # check if all X_ is have the same sample index
             )
-        elif (
-            len(X) == 1
-            and isinstance(X[0], (pd.DataFrame, np.ndarray))
-            and not isinstance(X, str)
-        ):  # single modality
+        elif isinstance(X, (pd.DataFrame, np.ndarray)):  # single modality
             print("Single modality input")
             self.cv_result = Parallel(n_jobs=-1)(
                 delayed(self._cv_iter)(
