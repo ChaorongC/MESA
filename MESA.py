@@ -2,7 +2,7 @@
  # @ Author: Chaorong Chen
  # @ Create Time: 2022-06-14 17:00:56
  # @ Modified by: Chaorong Chen
- # @ Modified time: 2024-12-19 15:52:47
+ # @ Modified time: 2024-12-19 15:53:52
  # @ Description: MESA
  """
 
@@ -98,7 +98,7 @@ class missing_value_processing:
             raise ValueError("The ratio of valid values should be greater than 0.")
 
     def transform(self, X):
-        if self.missing > 0:
+        if self.ratio > 0:
             return pd.DataFrame(
                 self.imputer.transform(X.iloc[:, self.X_valid]),
                 index=X.index,
