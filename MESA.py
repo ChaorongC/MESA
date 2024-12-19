@@ -2,7 +2,7 @@
  # @ Author: Chaorong Chen
  # @ Create Time: 2022-06-14 17:00:56
  # @ Modified by: Chaorong Chen
- # @ Modified time: 2024-12-18 04:21:00
+ # @ Modified time: 2024-12-18 16:09:10
  # @ Description: MESA
  """
 
@@ -280,9 +280,6 @@ class MESA:
     def fit(self, modalities, X_list, y):
         # add check parameters
         self.modalities = modalities
-        self.base_estimators = [
-            m.classifier.fit(X, y) for m, X in zip(modalities, X_list)
-        ]
         self.splits = [
             (train_index, test_index)
             for train_index, test_index in self.cv.split(X_list[0], y)
@@ -296,18 +293,19 @@ class MESA:
                 for m, X in zip(modalities, X_list)
             ]
         )
+        #self.base_estimators = [m.classifier for m in modalities]
         self.meta_estimator.fit(base_probability, y_stacking)
         return self
 
     def predict(self, X_list_test):
         base_probability_test = np.hstack(
-            [clf.predict_proba(X) for clf, X in zip(self.base_estimators, X_list_test)]
+            [m.transform_predict_proba(X) for m, X in zip(self.modalities, X_list_test)]
         )
         return self.meta_estimator.predict(base_probability_test)
 
     def predict_proba(self, X_list_test):
         base_probability_test = np.hstack(
-            [clf.predict_proba(X) for clf, X in zip(self.base_estimators, X_list_test)]
+            [m.transform_predict_proba(X) for m, X in zip(self.modalities, X_list_test)]
         )
         return self.meta_estimator.predict_proba(base_probability_test)
 
@@ -411,7 +409,9 @@ class MESA_CV:
         self,
         random_state=0,
         cv=StratifiedKFold(n_splits=5, shuffle=True, random_state=0),
-        selector=GenericUnivariateSelect(score_func=wilcoxon, mode="k_best", param=2000),
+        selector=GenericUnivariateSelect(
+            score_func=wilcoxon, mode="k_best", param=2000
+        ),
         boruta_est=RandomForestClassifier(random_state=0, n_jobs=-1),
         classifier=RandomForestClassifier(random_state=0, n_jobs=-1),
         normalization=False,
