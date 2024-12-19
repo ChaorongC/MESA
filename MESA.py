@@ -2,7 +2,7 @@
  # @ Author: Chaorong Chen
  # @ Create Time: 2022-06-14 17:00:56
  # @ Modified by: Chaorong Chen
- # @ Modified time: 2024-12-18 16:09:10
+ # @ Modified time: 2024-12-19 00:38:51
  # @ Description: MESA
  """
 
@@ -289,11 +289,11 @@ class MESA:
         )
         base_probability = np.hstack(
             [
-                self._base_fit(m.transform(X), y, clone(m.classifier))
+                self._base_fit(m.transform(X), y, clone(m.classifier)) ########
                 for m, X in zip(modalities, X_list)
             ]
         )
-        #self.base_estimators = [m.classifier for m in modalities]
+        # self.base_estimators = [m.classifier for m in modalities]
         self.meta_estimator.fit(base_probability, y_stacking)
         return self
 
@@ -496,11 +496,11 @@ class MESA_CV:
 
         modalities = [
             MESA_modality(
-                selector=selector,
+                selector=clone(selector),
                 random_state=self.random_state,
                 top_n=self.top_n,
                 missing=0,
-                classifier=self.classifier,
+                classifier=clone(self.classifier),
                 boruta_estimator=self.boruta_est,
                 normalization=False,
                 variance_threshold=variance_threshold,
@@ -509,7 +509,9 @@ class MESA_CV:
         ]
         mesa = MESA(
             meta_estimator=self.meta_estimator, random_state=self.random_state
-        ).fit(modalities, X_train, y_train)
+        ).fit(
+            modalities, X_train, y_train
+        )  # ValueError: X has 95986 features, but GenericUnivariateSelect is expecting 25545 features as input.
 
         if proba:
             y_pred = mesa.predict_proba(X_test)
