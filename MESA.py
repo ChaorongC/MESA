@@ -2,10 +2,12 @@
  # @ Author: Chaorong Chen
  # @ Create Time: 2022-06-14 17:00:56
  # @ Modified by: Chaorong Chen
- # @ Modified time: 2024-12-19 01:23:11
+ # @ Modified time: 2024-12-19 01:31:51
  # @ Description: MESA
  """
 
+import sys
+import time
 import pandas as pd
 from sklearn.base import clone
 from joblib import Parallel, delayed
@@ -21,6 +23,8 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import Normalizer, StandardScaler
 from collections.abc import Sequence
 
+def disp_mesa(txt):
+    print("@%s \t%s" % (time.asctime(), txt), file=sys.stderr)
 
 def wilcoxon(X, y):
     """
@@ -524,7 +528,7 @@ class MESA_CV:
         if (
             isinstance(X, Sequence) and not isinstance(X, str) and len(X) > 1
         ):  # multiple modalities
-            print("Mutiple modalities input")
+            disp_mesa("Mutiple modalities input")
             self.cv_result = Parallel(n_jobs=-1)(
                 delayed(self._cv_iter_mesa)(
                     X,
@@ -541,7 +545,7 @@ class MESA_CV:
                 )  # check if all X_ is have the same sample index
             )
         elif isinstance(X, (pd.DataFrame, np.ndarray)):  # single modality
-            print("Single modality input")
+            disp_mesa("Single modality input")
             self.cv_result = Parallel(n_jobs=-1)(
                 delayed(self._cv_iter)(
                     X,
