@@ -2,7 +2,7 @@
  # @ Author: Chaorong Chen
  # @ Create Time: 2022-06-14 17:00:56
  # @ Modified by: Chaorong Chen
- # @ Modified time: 2024-12-19 16:20:23
+ # @ Modified time: 2024-12-19 16:26:11
  # @ Description: MESA
  """
 
@@ -220,8 +220,8 @@ class MESA_modality:
 
     def get_support(self, step=None):
         if step == None:
-            return self.pipeline[0].get_support(indices=True)[
-                self.pipeline[1].get_support(indices=True)[self.pipeline[2].indices]
+            return self.pipeline[0].get_support()[
+                self.pipeline[-2].get_support(indices=True)[self.pipeline[-1].indices]
             ]
         else:
             return self.pipeline[step].get_support(indices=True)
