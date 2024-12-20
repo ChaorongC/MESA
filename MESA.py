@@ -2,7 +2,7 @@
  # @ Author: Chaorong Chen
  # @ Create Time: 2022-06-14 17:00:56
  # @ Modified by: Chaorong Chen
- # @ Modified time: 2024-12-19 16:06:17
+ # @ Modified time: 2024-12-19 16:11:56
  # @ Description: MESA
  """
 
@@ -92,7 +92,7 @@ class missing_value_processing:
     def fit(self, X, y=None):
         if self.ratio > 0:
             self.X_valid = np.where(pd.DataFrame(X).count(axis="rows") >= X.shape[0] * self.ratio)[0]
-            self.imputer = clone(self.imputer).fit(X.iloc[:, self.X_valid])
+            self.imputer = clone(self.imputer).fit(pd.DataFrame(X).iloc[:, self.X_valid])
             return self
         else:
             raise ValueError("The ratio of valid values should be greater than 0.")
