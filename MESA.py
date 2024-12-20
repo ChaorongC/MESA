@@ -2,7 +2,7 @@
  # @ Author: Chaorong Chen
  # @ Create Time: 2022-06-14 17:00:56
  # @ Modified by: Chaorong Chen
- # @ Modified time: 2024-12-19 16:15:56
+ # @ Modified time: 2024-12-19 16:20:23
  # @ Description: MESA
  """
 
@@ -91,11 +91,11 @@ class missing_value_processing:
 
     def fit(self, X, y=None):
         if self.ratio > 0:
-            self.X_valid = np.where(
+            self.indices = np.where(
                 pd.DataFrame(X).count(axis="rows") >= X.shape[0] * self.ratio
             )[0]
             self.imputer = clone(self.imputer).fit(
-                pd.DataFrame(X).iloc[:, self.X_valid]
+                pd.DataFrame(X).iloc[:, self.indices]
             )
             return self
         else:
@@ -104,12 +104,15 @@ class missing_value_processing:
     def transform(self, X):
         if self.ratio > 0:
             return pd.DataFrame(
-                self.imputer.transform(pd.DataFrame(X).iloc[:, self.X_valid]),
+                self.imputer.transform(pd.DataFrame(X).iloc[:, self.indices]),
                 index=X.index,
-                columns=X.columns[self.X_valid],
+                columns=X.columns[self.indices],
             )
         else:
             raise ValueError("The ratio of valid values should be greater than 0.")
+
+    def get_support(self):
+        return self.indices
 
 
 class MESA_modality:
